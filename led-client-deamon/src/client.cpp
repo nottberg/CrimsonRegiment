@@ -25,12 +25,21 @@ static void gettimeofday_cb( int nothing, short int which, void *ev )
     evtimer_add( (struct event *)ev, &TIMER_TV );
 }
 
+typedef struct midiPacketInHeader
+{
+    unsigned char          type;
+    unsigned long          tsec;
+    unsigned short        tmsec;
+    unsigned long long nsec;
+    unsigned char          length;
+}MIDI_PKTHDR_T;
+
 static void udp_cb( const int sock, short int which, void *arg )
 {
     struct sockaddr_in server_sin;
     socklen_t server_sz = sizeof( server_sin );
-    char buf[ sizeof( CLOCK_TV ) ];
-
+    char buf[ 1024 ];
+    
     // Recv the data, store the address of the sender in server_sin
     if( recvfrom( sock, &buf, sizeof(buf) - 1, 0, (struct sockaddr *) &server_sin, &server_sz ) == -1 ) 
     {
@@ -45,6 +54,26 @@ static void udp_cb( const int sock, short int which, void *arg )
     }
 
     printf( "rcv packet: %d, %d\n", CLOCK_TV.tv_sec, CLOCK_TV.tv_usec );
+
+    // Paste the structure over the data
+    MIDI_PKTHDR_T pktHdr;
+
+    pktHdr.type = buf[0];
+    pktHdr.tsec = ntohl(  *((unsigned long *)&buf[1]) );
+    pktHdr.tmsec = ntohs(  *((unsigned short *)&buf[5]) );
+    pktHdr.nsec = be64toh(  *((unsigned long long *)&buf[7]) );
+    pktHdr.length = buf[15];
+
+    printf( "  type: %d\n", pktHdr.type );
+    printf( "  ts: %ld.%d\n", pktHdr.tsec, pktHdr.tmsec );
+    printf( "  delta: %lld\n", pktHdr.nsec );
+    printf("   payload len: %d\n", pktHdr.length );
+
+    for( int i = 0; i < pktHdr.length; i++ )
+    {
+        printf( "%d  ", buf[16 + i] );
+    }
+    printf( "\n\n" );
 
 #if 0
     // Copy the time into buf; note, endianess unspecified!
