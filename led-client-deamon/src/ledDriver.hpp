@@ -19,32 +19,45 @@ typedef struct pixelEntryStruct
 class PixelBuffer
 {
     private:
-        int            ledCnt;
-        size_t      bufLength;
-        uint8_t  *bufPtr;
+        int      ledCnt;
 
-        static bool gammaLookupInitialized;
+        bool     updateFlag;
+        size_t   bufLength;
+        uint8_t *bufPtr;
+
+        bool gammaLookupInitialized;
    
-        static uint8_t  redGammaLookup[256];
-        static uint8_t  greenGammaLookup[256];
-        static uint8_t  blueGammaLookup[256];
+        uint8_t  redGammaLookup[256];
+        uint8_t  greenGammaLookup[256];
+        uint8_t  blueGammaLookup[256];
 
         void writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
+        void writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
 
     public:
-         PixelBuffer( uint16_t ledCount );
-      ~PixelBuffer();
+        PixelBuffer( uint16_t ledCount );
+       ~PixelBuffer();
 
+        bool updatePending();
+        void clearUpdatePending();
 
+        void setGammaCorrection( double red, double green, double blue );
+
+        void clearAllPixels();
+        void clearPixel( uint16_t pixelIndex );
+
+        void setPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
+
+        void getUpdateBuffer( uint8_t **buf, size_t &length ); 
 };
 
 class LEDDriver
 {
     private:
         std::string spiPath;
-        int             spifd;
+        int         spifd;
 
-        PixelBuffer  pixelData;
+        PixelBuffer pixelData;
 
     public:
         LEDDriver( std::string spidev, uint16_t ledCount );
@@ -53,6 +66,9 @@ class LEDDriver
         bool start();
         void stop();
     
+        PixelBuffer& getPixelBuffer();
+
+        void processUpdates();
 };
 
 #endif // __LED_DRIVER_H__
