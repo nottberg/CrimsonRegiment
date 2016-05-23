@@ -8,7 +8,7 @@
 // Represent the data for a single pixel 
 typedef struct pixelEntryStruct 
 {
-    // uint8_t flag;
+    uint8_t flag;
   
     uint8_t green;
     uint8_t red;

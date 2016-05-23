@@ -45,11 +45,13 @@ static void gettimeofday_cb( int nothing, short int which, void *userp )
     {
         pixData.setPixel( 0, 255, 255, 255 );
         pixData.setPixel( 1, 0, 0, 0 );
+        pixData.setPixel( 2, 255, 255, 255 );
     }
     else
     {
         pixData.setPixel( 0, 0, 0, 0 );
         pixData.setPixel( 1, 255, 255, 255 );
+        pixData.setPixel( 2, 0, 0, 0 );
     }
 
     // Process any pending led updates

@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <strings.h>
 
+#include <iostream>
+
 #include "ledDriver.hpp"
 
 PixelBuffer::PixelBuffer( uint16_t ledCount )
@@ -56,7 +58,8 @@ PixelBuffer::writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_
     p->blue  = blue;
     p->green = green;
     p->red   = red;
-    // printf ("index : %i %i %i %i\n",p, p->red  , p->green, p->blue);
+
+    printf ("index : %i 0x%x %i %i %i\n", pixelIndex, p, p->red  , p->green, p->blue);
 }
 
 void 
@@ -120,11 +123,11 @@ PixelBuffer::setPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t 
 {
     if( gammaLookupInitialized == true )
     {
-        writeGammaPixel( pixelIndex, 0, 0, 0 );
+        writeGammaPixel( pixelIndex, red, green, blue );
     }
     else
     {
-        writePixel( pixelIndex, 0, 0, 0 );
+        writePixel( pixelIndex, red, green, blue );
     }
 
     updateFlag = true;
@@ -211,12 +214,18 @@ LEDDriver::processUpdates()
     ssize_t  result;
     uint8_t *buf;
 
+    std::cout << "processUpdates: start" << std::endl;
+
     // Check if there is anything to do.
     if( pixelData.updatePending() == false )
         return;
 
+    std::cout << "processUpdates: 1" << std::endl;
+
     // Get the pixel data buffer to send
     pixelData.getUpdateBuffer( &buf, attempt );
+
+    std::cout << "processUpdates: 2" << std::endl;
 
     // Start with the whole buffer length;
     size = attempt; 
@@ -224,6 +233,8 @@ LEDDriver::processUpdates()
     // Do the update process
     while( size > 0 )
     {
+        std::cout << "processUpdates - attempt: " << attempt << std::endl;
+ 
         // Attempt to send the buffer on the SPI bus
         result = write( spifd, buf, attempt );
 
@@ -239,16 +250,22 @@ LEDDriver::processUpdates()
             }
             else
             {
+                std::cout << "processUpdates: error: " << errno << std::endl;
+
                 // A non recoverable error, exit.
                 return;
             }
         }
+
+        std::cout << "processUpdates - result: " << result << std::endl;
  
         // Advance the send pointer
         buf += result;
 
         // Account for already sent data
         size -= result;
+
+        std::cout << "processUpdates - sent: " << buf << " " << size << std::endl;
 
         // Take care of bit at the end.
         if( attempt > size ) 
