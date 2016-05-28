@@ -120,11 +120,11 @@ PixelBuffer::setPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t 
 {
     if( gammaLookupInitialized == true )
     {
-        writeGammaPixel( pixelIndex, 0, 0, 0 );
+        writeGammaPixel( pixelIndex, red, green, blue );
     }
     else
     {
-        writePixel( pixelIndex, 0, 0, 0 );
+        writePixel( pixelIndex, red, green, blue );
     }
 
     updateFlag = true;
