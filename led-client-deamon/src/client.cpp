@@ -8,12 +8,29 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "ledDriver.hpp"
+
+typedef struct clientContextStruct
+{
+    int sock;
+
+    LEDDriver *ledPtr;
+
+    struct event timer_event;
+    struct event udp_event;
+
+    struct sockaddr_in sin;    
+}CONTEXT_T;
+
 static struct timeval CLOCK_TV;
 
 static struct timeval TIMER_TV = {1, 0};
 
-static void gettimeofday_cb( int nothing, short int which, void *ev )
+static void gettimeofday_cb( int nothing, short int which, void *userp )
 {
+    CONTEXT_T *ctxt  = (CONTEXT_T *) userp;
+    struct event *ev = &(ctxt->timer_event);
+
     if( gettimeofday( &CLOCK_TV, NULL ) ) 
     {
         perror("gettimeofday()");
@@ -22,6 +39,23 @@ static void gettimeofday_cb( int nothing, short int which, void *ev )
 
     printf( "timer cb: %d, %d\n", CLOCK_TV.tv_sec, CLOCK_TV.tv_usec );
 
+    PixelBuffer &pixData = ctxt->ledPtr->getPixelBuffer();
+
+    if( (CLOCK_TV.tv_sec & 0x1) )
+    {
+        pixData.setPixel( 0, 255, 255, 255 );
+        pixData.setPixel( 1, 0, 0, 0 );
+    }
+    else
+    {
+        pixData.setPixel( 0, 0, 0, 0 );
+        pixData.setPixel( 1, 255, 255, 255 );
+    }
+
+    // Process any pending led updates
+    ctxt->ledPtr->processUpdates();
+
+    // Wake up again in a little bit.
     evtimer_add( (struct event *)ev, &TIMER_TV );
 }
 
@@ -92,17 +126,23 @@ int main( int argc, char **argv )
 {
     int ret, port, sock, fd[2];
 
+    LEDDriver leds( "/dev/spidev0.0", 150 );
+
     struct event timer_event, udp_event;
     struct sockaddr_in sin;
 
-    sock = socket( AF_INET, SOCK_DGRAM, 0 );
+    CONTEXT_T ctxt;
 
-    memset( &sin, 0, sizeof(sin) );
-    sin.sin_family           = AF_INET;
-    sin.sin_addr.s_addr = INADDR_ANY;
-    sin.sin_port              = htons( 10000 );
+    ctxt.ledPtr = &leds;
+
+    ctxt.sock = socket( AF_INET, SOCK_DGRAM, 0 );
+
+    memset( &(ctxt.sin), 0, sizeof(ctxt.sin) );
+    ctxt.sin.sin_family      = AF_INET;
+    ctxt.sin.sin_addr.s_addr = INADDR_ANY;
+    ctxt.sin.sin_port        = htons( 10000 );
 	
-    if( bind( sock, (struct sockaddr *) &sin, sizeof(sin) ) ) 
+    if( bind( ctxt.sock, (struct sockaddr *) &(ctxt.sin), sizeof(ctxt.sin) ) ) 
     {
         perror("bind()");
         exit(EXIT_FAILURE);
@@ -111,13 +151,16 @@ int main( int argc, char **argv )
     // Initialize libevent
     event_init();
 
+    // Startup the led string
+    leds.start();
+
     // Add the clock event
-    evtimer_set( &timer_event, &gettimeofday_cb, &timer_event );
-    evtimer_add( &timer_event, &TIMER_TV );
+    evtimer_set( &ctxt.timer_event, &gettimeofday_cb, &ctxt );
+    evtimer_add( &ctxt.timer_event, &TIMER_TV );
 
 	// Add the UDP event
-    event_set( &udp_event, sock, EV_READ|EV_PERSIST, udp_cb, NULL );
-    event_add( &udp_event, 0 );
+    event_set( &ctxt.udp_event, sock, EV_READ|EV_PERSIST, udp_cb, &ctxt );
+    event_add( &ctxt.udp_event, 0 );
 
 	// Enter the event loop; does not return.
     event_dispatch();
