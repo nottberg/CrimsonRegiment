@@ -28,6 +28,12 @@ PixelBuffer::PixelBuffer( uint16_t ledCount )
     // Clear the buffer to zeroes.
     bzero( bufPtr, bufLength );
 
+    // Initialize all of the pixels to black
+    for( uint32_t i = 0; i < ledCount; i++ )
+    {
+        writePixel( i, 0x00, 0x00, 0x00 );
+    }
+
     // Write out the zeros on next opportunity
     updateFlag = true;
 
@@ -53,9 +59,9 @@ PixelBuffer::writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_
     if( pixelIndex >= ledCnt )
         return;
 
-    p->blue  = blue;
-    p->green = green;
-    p->red   = red;
+    p->blue  = 0x80 | ( blue & 0x7F );
+    p->green = 0x80 | ( green & 0x7F );
+    p->red   = 0x80 | ( red & 0x7F );
     // printf ("index : %i %i %i %i\n",p, p->red  , p->green, p->blue);
 }
 
