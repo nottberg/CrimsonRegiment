@@ -43,7 +43,7 @@ ClientMain::eventAction( uint32_t eventID )
     int                bytesRead;
     uint8_t            pktBuf[2048];
     struct sockaddr_in addr; 
-    unsigned int       addrLen;
+    unsigned int       addrLen = sizeof( addr );
 
     std::cout << "ClientMain::eventAction" << std::endl;
 
