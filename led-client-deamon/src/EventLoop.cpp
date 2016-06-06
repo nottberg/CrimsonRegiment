@@ -82,6 +82,9 @@ EventLoop::addSource( EventSource *srcObj )
 void
 EventLoop::start()
 {
+    // Initialize the lib event library
+    event_init();
+
     // Go through all of the event sources
     // calling register for each.
     for( std::vector< EventSource* >::iterator it = srcList.begin(); it != srcList.end(); it++ )
