@@ -36,9 +36,6 @@ PixelBuffer::PixelBuffer( uint16_t ledCount )
         writePixel( i, 0x00, 0x00, 0x00 );
     }
 
-    // Write out the zeros on next opportunity
-    updateFlag = true;
-
     // Start up with no gamma correction
     gammaLookupInitialized = false;
 
@@ -82,18 +79,6 @@ PixelBuffer::writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, u
     // printf ("index : %i %i %i %i\n",p, p->red  , p->green, p->blue);
 }
 
-bool 
-PixelBuffer::updatePending()
-{
-    return updateFlag;
-}
-
-void 
-PixelBuffer::clearUpdatePending()
-{
-    updateFlag = false;
-}
-
 void
 PixelBuffer::setGammaCorrection( double red, double green, double blue )
 {
@@ -112,16 +97,12 @@ PixelBuffer::clearAllPixels()
 {
     // Clear the buffer to zeroes.
     bzero( bufPtr, bufLength );
-
-    updateFlag = true;
 }
 
 void
 PixelBuffer::clearPixel( uint16_t pixelIndex )
 {
     writePixel( pixelIndex, 0, 0, 0 );
-
-    updateFlag = true;
 }
 
 void
@@ -135,8 +116,6 @@ PixelBuffer::setPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t 
     {
         writePixel( pixelIndex, red, green, blue );
     }
-
-    updateFlag = true;
 }
 
 void 
@@ -147,7 +126,7 @@ PixelBuffer::getUpdateBuffer( uint8_t **buf, size_t &length )
 }
 
 LEDDriver::LEDDriver( std::string spidev, uint16_t ledCount )
-: pixelData( ledCount )
+: pixelData( ledCount ), updateEvent( 1, "ledDriverUpdateEvent" )
 {
     spiPath = spidev;
     spifd   = (-1);
@@ -160,7 +139,7 @@ LEDDriver::~LEDDriver()
 }
 
 bool 
-LEDDriver::start()
+LEDDriver::start( EventLoop &loop )
 {
     int ret;
     const uint8_t mode   = SPI_MODE_0;
@@ -196,6 +175,14 @@ LEDDriver::start()
         return true;
     }
 
+    // Add a callback for us
+    updateEvent.addObserver( this );
+
+    updateEvent.setup();
+
+    // Register our events
+    loop.addSource( &updateEvent );
+
     return false;
 }
 
@@ -206,10 +193,34 @@ LEDDriver::stop()
 
 }
 
-PixelBuffer& 
-LEDDriver::getPixelBuffer()
+void 
+LEDDriver::setGammaCorrection( double red, double green, double blue )
 {
-    return pixelData;
+    pixelData.setGammaCorrection( red, green, blue );
+}
+
+void 
+LEDDriver::clearAllPixels()
+{
+    pixelData.clearAllPixels();
+
+    signalUpdate();
+}
+
+void 
+LEDDriver::clearPixel( uint16_t pixelIndex )
+{
+    pixelData.clearPixel( pixelIndex );
+
+    signalUpdate();
+}
+
+void 
+LEDDriver::setPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue )
+{
+    pixelData.setPixel( pixelIndex, red, green, blue );
+
+    signalUpdate();
 }
 
 void 
@@ -221,10 +232,6 @@ LEDDriver::processUpdates()
     uint8_t *buf;
 
     std::cout << "processUpdates: start" << std::endl;
-
-    // Check if there is anything to do.
-    if( pixelData.updatePending() == false )
-        return;
 
     std::cout << "processUpdates: 1" << std::endl;
 
@@ -278,7 +285,22 @@ LEDDriver::processUpdates()
             attempt = size;
     }
 
-    // Mark the update as complete
-    pixelData.clearUpdatePending();
 }
+
+// Signal that an update is pending
+void 
+LEDDriver::signalUpdate()
+{
+    updateEvent.trigger();
+}
+
+// Handle events
+void 
+LEDDriver::eventAction( uint32_t EventID )
+{
+    processUpdates();
+
+    updateEvent.clear();
+}
+
 

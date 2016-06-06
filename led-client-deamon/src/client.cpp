@@ -8,7 +8,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "ledDriver.hpp"
+//#include "ledDriver.hpp"
+#include "ClientMain.hpp"
 
 typedef struct clientContextStruct
 {
@@ -39,29 +40,27 @@ static void gettimeofday_cb( int nothing, short int which, void *userp )
 
     printf( "timer cb: %d, %d\n", CLOCK_TV.tv_sec, CLOCK_TV.tv_usec );
 
-    PixelBuffer &pixData = ctxt->ledPtr->getPixelBuffer();
-
     if( (CLOCK_TV.tv_sec & 0x1) )
     {
-        pixData.setPixel( 0, 255, 255, 255 );
-        pixData.setPixel( 1, 0, 0, 0 );
-        pixData.setPixel( 2, 255, 255, 255 );
-        pixData.setPixel( 3, 255, 0, 0 );
-        pixData.setPixel( 4, 0, 255, 0 );
-        pixData.setPixel( 5, 0, 0, 255 );
+        ctxt->ledPtr->setPixel( 0, 255, 255, 255 );
+        ctxt->ledPtr->setPixel( 1, 0, 0, 0 );
+        ctxt->ledPtr->setPixel( 2, 255, 255, 255 );
+        ctxt->ledPtr->setPixel( 3, 255, 0, 0 );
+        ctxt->ledPtr->setPixel( 4, 0, 255, 0 );
+        ctxt->ledPtr->setPixel( 5, 0, 0, 255 );
     }
     else
     {
-        pixData.setPixel( 0, 0, 0, 0 );
-        pixData.setPixel( 1, 255, 255, 255 );
-        pixData.setPixel( 2, 0, 0, 0 );
-        pixData.setPixel( 3, 0, 0, 0 );
-        pixData.setPixel( 4, 0, 0, 0 );
-        pixData.setPixel( 5, 0, 0, 0 );
+        ctxt->ledPtr->setPixel( 0, 0, 0, 0 );
+        ctxt->ledPtr->setPixel( 1, 255, 255, 255 );
+        ctxt->ledPtr->setPixel( 2, 0, 0, 0 );
+        ctxt->ledPtr->setPixel( 3, 0, 0, 0 );
+        ctxt->ledPtr->setPixel( 4, 0, 0, 0 );
+        ctxt->ledPtr->setPixel( 5, 0, 0, 0 );
     }
 
     // Process any pending led updates
-    ctxt->ledPtr->processUpdates();
+    //ctxt->ledPtr->processUpdates();
 
     // Wake up again in a little bit.
     evtimer_add( (struct event *)ev, &TIMER_TV );
@@ -132,6 +131,13 @@ static void udp_cb( const int sock, short int which, void *arg )
 
 int main( int argc, char **argv )
 {
+    ClientMain client;
+
+    client.setup();
+
+    client.run();
+
+#if 0
     int ret, port, sock, fd[2];
 
     LEDDriver leds( "/dev/spidev0.0", 150 );
@@ -173,6 +179,7 @@ int main( int argc, char **argv )
 	// Enter the event loop; does not return.
     event_dispatch();
     close( sock );
+#endif
     return 0;
 }
 

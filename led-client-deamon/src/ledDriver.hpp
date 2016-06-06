@@ -5,6 +5,8 @@
 #include <linux/types.h>
 #include <string>
 
+#include "ClientEvents.hpp"
+
 // Represent the data for a single pixel 
 typedef struct pixelEntryStruct 
 {
@@ -21,7 +23,6 @@ class PixelBuffer
     private:
         int      ledCnt;
 
-        bool     updateFlag;
         size_t   bufLength;
         uint8_t *bufPtr;
 
@@ -38,9 +39,6 @@ class PixelBuffer
         PixelBuffer( uint16_t ledCount );
        ~PixelBuffer();
 
-        bool updatePending();
-        void clearUpdatePending();
-
         void setGammaCorrection( double red, double green, double blue );
 
         void clearAllPixels();
@@ -51,24 +49,37 @@ class PixelBuffer
         void getUpdateBuffer( uint8_t **buf, size_t &length ); 
 };
 
-class LEDDriver
+class LEDDriver : public EventNotify
 {
     private:
         std::string spiPath;
         int         spifd;
-
+        
         PixelBuffer pixelData;
+
+        SoftEventSource updateEvent;
+
+        void processUpdates();
 
     public:
         LEDDriver( std::string spidev, uint16_t ledCount );
         ~LEDDriver();
 
-        bool start();
+        bool start( EventLoop &loop );
         void stop();
     
-        PixelBuffer& getPixelBuffer();
+        void setGammaCorrection( double red, double green, double blue );
 
-        void processUpdates();
+        void clearAllPixels();
+        void clearPixel( uint16_t pixelIndex );
+
+        void setPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
+
+        // Signal that an update is pending
+        void signalUpdate();
+
+        // Handle events
+        virtual void eventAction( uint32_t EventID );
 };
 
 #endif // __LED_DRIVER_H__
