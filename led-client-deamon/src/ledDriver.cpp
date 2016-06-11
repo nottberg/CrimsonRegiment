@@ -126,11 +126,13 @@ PixelBuffer::getUpdateBuffer( uint8_t **buf, size_t &length )
 }
 
 LEDDriver::LEDDriver( std::string spidev, uint16_t ledCount )
-: pixelData( ledCount ), updateEvent( 1, "ledDriverUpdateEvent" )
+: pixelData( ledCount ) //, updateEvent( 1, "ledDriverUpdateEvent" )
 {
     spiPath = spidev;
     spifd   = (-1);
     //ledCnt = ledCount;
+
+    pendingUpdate = false;
 }
 
 LEDDriver::~LEDDriver()
@@ -176,12 +178,12 @@ LEDDriver::start( EventLoop &loop )
     }
 
     // Add a callback for us
-    updateEvent.addObserver( this );
+//    updateEvent.addObserver( this );
 
-    updateEvent.setup();
+//    updateEvent.setup();
 
     // Register our events
-    loop.addSource( &updateEvent );
+//    loop.addSource( &updateEvent );
 
     return false;
 }
@@ -232,6 +234,12 @@ LEDDriver::processUpdates()
     uint8_t *buf;
 
     std::cout << "processUpdates: start" << std::endl;
+
+    // Nothing to do.
+    if( pendingUpdate == false )
+    {
+        return;
+    }
 
     std::cout << "processUpdates: 1" << std::endl;
 
@@ -291,7 +299,8 @@ LEDDriver::processUpdates()
 void 
 LEDDriver::signalUpdate()
 {
-    updateEvent.trigger();
+    //updateEvent.trigger();
+    pendingUpdate = true;
 }
 
 // Handle events
@@ -300,7 +309,7 @@ LEDDriver::eventAction( uint32_t EventID )
 {
     processUpdates();
 
-    updateEvent.clear();
+    //updateEvent.clear();
 }
 
 

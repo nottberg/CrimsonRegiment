@@ -57,9 +57,9 @@ class LEDDriver : public EventNotify
         
         PixelBuffer pixelData;
 
-        SoftEventSource updateEvent;
+//        SoftEventSource updateEvent;
 
-        void processUpdates();
+        bool pendingUpdate;
 
     public:
         LEDDriver( std::string spidev, uint16_t ledCount );
@@ -80,6 +80,9 @@ class LEDDriver : public EventNotify
 
         // Handle events
         virtual void eventAction( uint32_t EventID );
+
+        // Perform updates to hardware, if needed.
+        void processUpdates();
 };
 
 #endif // __LED_DRIVER_H__
