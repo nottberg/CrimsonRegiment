@@ -44,13 +44,20 @@ LEDSequencer::eventAction( uint32_t EventID )
 
     if( leds == NULL )
         return;
+#if 0
+    // Immediately apply any update if necessary so
+    // the we get it as close to the 100ms boundary
+    // as possible.
+    leds->performUpdate();
 
+    // Get a timestamp for the sequencer to key off of if necessary
     if( gettimeofday( &CLOCK_TV, NULL ) ) 
     {
         perror("gettimeofday()");
         event_loopbreak();
     }
 
+    // Temporary code to exercise things
     if( (CLOCK_TV.tv_sec & 0x1) )
     {
         leds->setPixel( 0, 255, 255, 255 );
@@ -69,5 +76,6 @@ LEDSequencer::eventAction( uint32_t EventID )
         leds->setPixel( 4, 0, 0, 0 );
         leds->setPixel( 5, 0, 0, 0 );
     }
+#endif
 }
 

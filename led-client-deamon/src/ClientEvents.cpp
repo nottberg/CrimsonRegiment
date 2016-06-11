@@ -47,6 +47,7 @@ TimerEventSource::registerEvent()
 void 
 TimerEventSource::beforeObservers( const int arg1, short int which )
 {
+#if 0
     struct timeval CLOCK_TV;
 
     std::cout << "TimerEventSource::beforeObservers" << std::endl;
@@ -58,6 +59,7 @@ TimerEventSource::beforeObservers( const int arg1, short int which )
     }
 
     printf( "timer cb: %d, %d\n", CLOCK_TV.tv_sec, CLOCK_TV.tv_usec );
+#endif
 }
 
 void 
@@ -68,6 +70,7 @@ TimerEventSource::afterObservers( const int arg1, short int which )
 
     std::cout << "TimerEventSource::afterObservers" << std::endl;
 
+    // Get the current time.
     if( gettimeofday( &CLOCK_TV, NULL ) ) 
     {
         perror("gettimeofday()");
@@ -75,6 +78,15 @@ TimerEventSource::afterObservers( const int arg1, short int which )
     }
 
     printf( "timer cb: %d, %d\n", CLOCK_TV.tv_sec, CLOCK_TV.tv_usec );
+
+    // Calculate the time to the next 100ms boundary
+    CLOCK_TV.tv_usec = ( ( CLOCK_TV.tv_usec / 100000 ) * 100000 ) + 100000;
+
+    printf( "new time: %d, %d\n", CLOCK_TV.tv_sec, CLOCK_TV.tv_usec );
+
+    // Timer
+    //TIMER_TV.tv_sec  = ;
+    //TIMER_TV.tv_usec = ;
 
     // Wake up again in a little bit.
     evtimer_add( getEventPtr(), &TIMER_TV );
