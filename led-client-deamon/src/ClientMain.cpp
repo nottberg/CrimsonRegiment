@@ -1,3 +1,7 @@
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <iostream>
 
 #include "ClientMain.hpp"
@@ -47,5 +51,7 @@ ClientMain::eventAction( uint32_t eventID )
 
     std::cout << "ClientMain::eventAction - byteRead: " << bytesRead << std::endl;
 
+    printf( "sin_port: %d\n", ntohs( addr.sin_port ) );
+    printf( "saddr: %s\n", inet_ntoa( addr.sin_addr ) );
 }
 
