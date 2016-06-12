@@ -71,6 +71,8 @@ class SocketEventSource : public EventSource
 
         bool setup();
 
+        int getSocketFD();
+
         virtual void registerEvent();
         virtual void eventAction( const int arg1, short int which );
 

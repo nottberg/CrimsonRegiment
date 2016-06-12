@@ -6,7 +6,7 @@
 #include "ledDriver.hpp"
 #include "LEDSequencer.hpp"
 
-class ClientMain
+class ClientMain : public EventNotify
 {
     private:
         EventLoop         loop;
@@ -24,6 +24,7 @@ class ClientMain
 
         void run();
 
+        virtual void eventAction( uint32_t eventID );
 };
 
 #endif // __CLIENTMAIN_H__

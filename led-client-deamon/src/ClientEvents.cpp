@@ -280,6 +280,12 @@ SocketEventSource::setup()
 #endif
 }
 
+int 
+SocketEventSource::getSocketFD()
+{
+    return socketFD;
+}
+
 void 
 SocketEventSource::registerEvent()
 {
