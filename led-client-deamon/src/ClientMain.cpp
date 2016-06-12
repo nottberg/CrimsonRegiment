@@ -20,7 +20,7 @@ ClientMain::setup()
     //sequencer.start( loop );
 
     eventSock.setup();
-    eventSock.registerEvent();
+    loop.addSource( &eventSock );
 }
 
 void 
