@@ -9,10 +9,12 @@
 class ClientMain
 {
     private:
-        EventLoop        loop;
+        EventLoop         loop;
 
-        LEDDriver        driver;
-        LEDSequencer     sequencer;
+        LEDDriver         driver;
+        LEDSequencer      sequencer;
+
+        SocketEventSource eventSock;
 
     public:
         ClientMain();
