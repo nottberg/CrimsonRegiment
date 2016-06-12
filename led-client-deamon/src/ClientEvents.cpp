@@ -180,14 +180,14 @@ SocketEventSource::setup()
 
     memset( &sin, 0, sizeof(sin) );
     sin.sin_family      = AF_INET;
-    sin.sin_addr.s_addr = INADDR_BROADCAST;
+    sin.sin_addr.s_addr = INADDR_ANY;
     sin.sin_port        = htons( 10260 );
 	
     // Allow multiple bind to the broadcast address
-    result = setsockopt( socketFD, SOL_SOCKET, SO_REUSEADDR, &so_reuseaddr, sizeof so_reuseaddr );
+    //result = setsockopt( socketFD, SOL_SOCKET, SO_REUSEADDR, &so_reuseaddr, sizeof so_reuseaddr );
 
     // Set the socket for broadcast traffic
-    result = setsockopt( socketFD, SOL_SOCKET, SO_BROADCAST, &so_broadcast, sizeof so_broadcast );
+    //result = setsockopt( socketFD, SOL_SOCKET, SO_BROADCAST, &so_broadcast, sizeof so_broadcast );
 
     // Bind to a local address
     if( bind( socketFD, (struct sockaddr *) &(sin), sizeof(sin) ) ) 

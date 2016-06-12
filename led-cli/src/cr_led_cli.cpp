@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <arpa/inet.h>
 
 #include <iostream>
 
@@ -18,12 +19,12 @@ main( int argc, char **argv )
 
     bcast_sock = socket(AF_INET, SOCK_DGRAM, 0);
     
-    result = setsockopt( bcast_sock, SOL_SOCKET, SO_BROADCAST, &broadcastEnable, sizeof(broadcastEnable) );
+//    result = setsockopt( bcast_sock, SOL_SOCKET, SO_BROADCAST, &broadcastEnable, sizeof(broadcastEnable) );
 
     memset( &s, '\0', sizeof( struct sockaddr_in ) );
     s.sin_family      = AF_INET;
     s.sin_port        = (in_port_t)htons( 10260 );
-    s.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+    s.sin_addr.s_addr = inet_aton( "192.168.2.7", &s.sin_addr );
 
     std::cout << "Send" << std::endl;
 
