@@ -67,6 +67,21 @@ ClientMain::eventAction( uint32_t eventID )
             printf( "saddr: %s\n", inet_ntoa( addr.sin_addr ) );
 
             printf( "opcode: %d\n", cmdPkt.getOpCode() );
+
+            switch( cmdPkt.getOpCode() )
+            {
+                case CRLED_CMDOP_SCHEDULE:
+                {
+                    std::cout << "Schedule Command: " << cmdPkt.getParam1() << std::endl;
+                }
+                break;
+
+                case CRLED_CMDOP_CLEAR:
+                {
+                    std::cout << "Clear Command: " << cmdPkt.getParam1() << std::endl;
+                }
+                break;
+            }
         }
     }
 }
