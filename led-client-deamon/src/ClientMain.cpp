@@ -4,6 +4,7 @@
 
 #include <iostream>
 
+#include "CRLEDPacket.hpp"
 #include "ClientMain.hpp"
 
 ClientMain::ClientMain()
@@ -22,8 +23,8 @@ ClientMain::setup()
 {
     sequencer.setDriver( &driver );
 
-    //driver.start( loop );
-    //sequencer.start( loop );
+    driver.start( loop );
+    sequencer.start( loop );
 
     eventSock.addObserver( this );
     eventSock.setup();
@@ -40,18 +41,33 @@ ClientMain::run()
 void 
 ClientMain::eventAction( uint32_t eventID )
 {
-    int                bytesRead;
-    uint8_t            pktBuf[2048];
-    struct sockaddr_in addr; 
-    unsigned int       addrLen = sizeof( addr );
+    switch( eventID )
+    {
+        // Receive socket event
+        case 1:
+        {
+            uint32_t           bytesRead;
+//            uint8_t            pktBuf[2048];
+            CRLEDCommandPacket cmdPkt;
+            struct sockaddr_in addr; 
+            unsigned int       addrLen = sizeof( addr );
 
-    std::cout << "ClientMain::eventAction" << std::endl;
+            std::cout << "ClientMain::eventAction" << std::endl;
 
-    bytesRead = recvfrom( eventSock.getSocketFD(), pktBuf, sizeof( pktBuf ), 0, (struct sockaddr *) &addr, &addrLen );
+            bytesRead = recvfrom( eventSock.getSocketFD(), cmdPkt.getMessageBuffer(), cmdPkt.getMaxMessageLength(), 0, (struct sockaddr *) &addr, &addrLen );
 
-    std::cout << "ClientMain::eventAction - byteRead: " << bytesRead << std::endl;
+            if( bytesRead < sizeof( CRLED_CMDPKT_T ) )
+            {
+                std::cout << "ClientMain::eventAction - ERROR: short packet: " << bytesRead << std::endl;
+                return;
+            }
 
-    printf( "sin_port: %d\n", ntohs( addr.sin_port ) );
-    printf( "saddr: %s\n", inet_ntoa( addr.sin_addr ) );
+            std::cout << "ClientMain::eventAction - byteRead: " << bytesRead << std::endl;
+            printf( "sin_port: %d\n", ntohs( addr.sin_port ) );
+            printf( "saddr: %s\n", inet_ntoa( addr.sin_addr ) );
+
+            printf( "opcode: %d\n", cmdPkt.getOpCode() );
+        }
+    }
 }
 

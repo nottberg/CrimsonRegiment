@@ -46,13 +46,13 @@ EventSource::registerEvent()
 void 
 EventSource::beforeObservers( const int arg1, short int which )
 {
-    std::cout << "EventSource::beforeObservers" << std::endl;
+    //std::cout << "EventSource::beforeObservers" << std::endl;
 }
 
 void
 EventSource::afterObservers( const int arg1, short int which )
 {
-    std::cout << "EventSource::afterObservers" << std::endl;
+    //std::cout << "EventSource::afterObservers" << std::endl;
 }
 
 void 

@@ -62,7 +62,7 @@ PixelBuffer::writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_
     p->green = 0x80 | ( green & 0x7F );
     p->red   = 0x80 | ( red & 0x7F );
 
-    printf ("index : %i 0x%x %x %x %x\n", pixelIndex, p, p->red  , p->green, p->blue);
+//    printf ("index : %i 0x%x %x %x %x\n", pixelIndex, p, p->red  , p->green, p->blue);
 }
 
 void 
@@ -233,7 +233,7 @@ LEDDriver::processUpdates()
     ssize_t  result;
     uint8_t *buf;
 
-    std::cout << "processUpdates: start" << std::endl;
+    //std::cout << "processUpdates: start" << std::endl;
 
     // Nothing to do.
     if( pendingUpdate == false )
@@ -241,12 +241,12 @@ LEDDriver::processUpdates()
         return;
     }
 
-    std::cout << "processUpdates: 1" << std::endl;
+    //std::cout << "processUpdates: 1" << std::endl;
 
     // Get the pixel data buffer to send
     pixelData.getUpdateBuffer( &buf, attempt );
 
-    std::cout << "processUpdates: 2" << std::endl;
+    //std::cout << "processUpdates: 2" << std::endl;
 
     // Start with the whole buffer length;
     size = attempt; 
@@ -254,7 +254,7 @@ LEDDriver::processUpdates()
     // Do the update process
     while( size > 0 )
     {
-        std::cout << "processUpdates - attempt: " << attempt << std::endl;
+        //std::cout << "processUpdates - attempt: " << attempt << std::endl;
  
         // Attempt to send the buffer on the SPI bus
         result = write( spifd, buf, attempt );
@@ -271,14 +271,14 @@ LEDDriver::processUpdates()
             }
             else
             {
-                std::cout << "processUpdates: error: " << errno << std::endl;
+                //std::cout << "processUpdates: error: " << errno << std::endl;
 
                 // A non recoverable error, exit.
                 return;
             }
         }
 
-        std::cout << "processUpdates - result: " << result << std::endl;
+        //std::cout << "processUpdates - result: " << result << std::endl;
  
         // Advance the send pointer
         buf += result;
@@ -286,7 +286,7 @@ LEDDriver::processUpdates()
         // Account for already sent data
         size -= result;
 
-        std::cout << "processUpdates - sent: " << buf << " " << size << std::endl;
+        //std::cout << "processUpdates - sent: " << buf << " " << size << std::endl;
 
         // Take care of bit at the end.
         if( attempt > size ) 

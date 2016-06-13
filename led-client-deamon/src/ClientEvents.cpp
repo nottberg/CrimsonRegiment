@@ -69,7 +69,7 @@ TimerEventSource::afterObservers( const int arg1, short int which )
     struct timeval NEW_TV;
     struct timeval TIMER_TV = {1, 0};
 
-    std::cout << "TimerEventSource::afterObservers" << std::endl;
+    //std::cout << "TimerEventSource::afterObservers" << std::endl;
 
     // Get the current time.
     if( gettimeofday( &CLOCK_TV, NULL ) ) 
@@ -78,7 +78,7 @@ TimerEventSource::afterObservers( const int arg1, short int which )
         event_loopbreak();
     }
 
-    printf( "timer cb: %d, %d\n", CLOCK_TV.tv_sec, CLOCK_TV.tv_usec );
+    //printf( "timer cb: %d, %d\n", CLOCK_TV.tv_sec, CLOCK_TV.tv_usec );
 
     // Calculate the time to the next 100ms boundary
     NEW_TV.tv_usec = ( ( CLOCK_TV.tv_usec / 100000 ) * 100000 ) + 100000;
@@ -90,7 +90,7 @@ TimerEventSource::afterObservers( const int arg1, short int which )
         NEW_TV.tv_sec  += 1;
     }
 
-    printf( "new time: %d, %d\n", NEW_TV.tv_sec, NEW_TV.tv_usec );
+    //printf( "new time: %d, %d\n", NEW_TV.tv_sec, NEW_TV.tv_usec );
 
     if( NEW_TV.tv_usec == 0 )
     {
@@ -103,7 +103,7 @@ TimerEventSource::afterObservers( const int arg1, short int which )
         TIMER_TV.tv_usec = NEW_TV.tv_usec - CLOCK_TV.tv_usec;
     }
 
-    printf( "new inc: %d, %d\n", TIMER_TV.tv_sec, TIMER_TV.tv_usec );
+    //printf( "new inc: %d, %d\n", TIMER_TV.tv_sec, TIMER_TV.tv_usec );
 
     // Wake up again in a little bit.
     evtimer_add( getEventPtr(), &TIMER_TV );
@@ -197,87 +197,6 @@ SocketEventSource::setup()
     }
 
     return false;
-#if 0
-    int z;
-    int x;
-    struct sockaddr_in adr;  /* AF_INET */
-    int len_inet;            /* length */
-    int s;                   /* Socket */
-    char dgram[512];         /* Recv buffer */
-    static int so_reuseaddr = TRUE;
-    static char
-    *bc_addr = "127.255.255.2:9097";
-
-    /*
-     * Use a server address from the command
-     * line, if one has been provided.
-     * Otherwise, this program will default
-     * to using the arbitrary address
-     * 127.0.0.:
-     */
-    if( argc > 1 )
-    /* Broadcast address: */
-       bc_addr = argv[1];
-
-    /*
-     * Create a UDP socket to use:
-     */
-    s = socket( AF_INET, SOCK_DGRAM, 0 );
-    if( s == -1 )
-    {
-        displayError("socket()");
-    }
-
-    /*
-     * Form the broadcast address:
-     */
-    len_inet = sizeof adr;
-
-    z = mkaddr( &adr, &len_inet, bc_addr, "udp" );
-
-    if( z == -1 )
-       displayError("Bad broadcast address");
-
-    /*
-     * Allow multiple listeners on the
-     * broadcast address:
-     */
-    z = setsockopt( s, SOL_SOCKET, SO_REUSEADDR, &so_reuseaddr, sizeof so_reuseaddr );
-
-    if( z == -1 )
-        displayError("setsockopt(SO_REUSEADDR)");
-
-    /*
-     * Bind our socket to the broadcast address:
-     */
-    z = bind( s, (struct sockaddr *)&adr, len_inet );
-
-    if( z == -1 )
-        displayError( "bind(2)" );
-
-    for(;;)
-    {
-        /*
-         * Wait for a broadcast message:
-         */
-        z = recvfrom( s,      /* Socket */
-                      dgram,  /* Receiving buffer */
-                      sizeof dgram,/* Max rcv buf size */
-                      0,      /* Flags: no options */
-                      (struct sockaddr *)&adr, /* Addr */
-                      &x);    /* Addr len, in & out */
-
-        if( z < 0 )
-            displayError( "recvfrom(2)" ); /* else err */
-
-        fwrite( dgram, z, 1, stdout );
-        putchar( '\n' );
-
-        fflush( stdout );
-    }
-
-    return 0;
-#endif
 }
 
 int 

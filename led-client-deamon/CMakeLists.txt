@@ -7,6 +7,7 @@ ADD_DEFINITIONS(-std=c++11)
 SET( CR_LED_CLIENTD_SOURCE
      ${CMAKE_SOURCE_DIR}/src/ledDriver.cpp
      ${CMAKE_SOURCE_DIR}/src/EventLoop.cpp
+     ${CMAKE_SOURCE_DIR}/src/CRLEDPacket.cpp
      ${CMAKE_SOURCE_DIR}/src/ClientEvents.cpp
      ${CMAKE_SOURCE_DIR}/src/ClientMain.cpp
      ${CMAKE_SOURCE_DIR}/src/LEDSequencer.cpp

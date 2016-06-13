@@ -40,7 +40,7 @@ LEDSequencer::eventAction( uint32_t EventID )
 {
     struct timeval CLOCK_TV;
 
-    std::cout << "LEDSequencer::eventAction" << std::endl;
+    //std::cout << "LEDSequencer::eventAction" << std::endl;
 
     if( leds == NULL )
         return;
