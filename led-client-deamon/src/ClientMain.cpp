@@ -30,6 +30,11 @@ ClientMain::setup()
     eventSock.setup();
     loop.addSource( &eventSock );
 
+    LDStepWaitForStart startStep;
+    LDStepRegionOn     onStep;
+
+    sequencer.appendToSequenceDefinition( 0, startStep );
+    sequencer.appendToSequenceDefinition( 0, onStep );
 }
 
 void 
@@ -73,12 +78,14 @@ ClientMain::eventAction( uint32_t eventID )
                 case CRLED_CMDOP_SCHEDULE:
                 {
                     std::cout << "Schedule Command: " << cmdPkt.getParam1() << std::endl;
+                    sequencer.startSequence( cmdPkt.getParam1(), &cmdPkt );
                 }
                 break;
 
                 case CRLED_CMDOP_CLEAR:
                 {
                     std::cout << "Clear Command: " << cmdPkt.getParam1() << std::endl;
+                    sequencer.clearSequence();
                 }
                 break;
             }
