@@ -267,6 +267,8 @@ LEDSequencer::startSequence( uint32_t seqNumber, CRLEDCommandPacket *cmdPkt )
 void 
 LEDSequencer::clearSequence()
 {
+    std::cout << "LEDSequencer::clearSequence" << std::endl;
+
     activeSeqNum = LS_SEQ_NOT_ACTIVE;
 
     if( leds == NULL )

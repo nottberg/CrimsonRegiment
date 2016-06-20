@@ -95,8 +95,11 @@ PixelBuffer::setGammaCorrection( double red, double green, double blue )
 void
 PixelBuffer::clearAllPixels()
 {
-    // Clear the buffer to zeroes.
-    bzero( bufPtr, bufLength );
+    // Initialize all of the pixels to black
+    for( uint32_t i = 0; i < ledCnt; i++ )
+    {
+        writePixel( i, 0x00, 0x00, 0x00 );
+    }
 }
 
 void
@@ -204,6 +207,8 @@ LEDDriver::setGammaCorrection( double red, double green, double blue )
 void 
 LEDDriver::clearAllPixels()
 {
+    std::cout << "LEDDriver::clearAllPixels" << std::endl;
+
     pixelData.clearAllPixels();
 
     signalUpdate();
