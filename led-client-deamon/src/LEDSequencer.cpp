@@ -21,6 +21,8 @@ LEDSequenceStep::init( CRLEDCommandPacket *cmdPkt )
 LS_STEP_UPDATE_RESULT_T 
 LEDSequenceStep::update( struct timeval *curTime, LEDDriver *leds )
 {
+    std::cout << "LEDSequenceStep::update" << std::endl;
+
     return LS_STEP_UPDATE_RESULT_DONE;
 }
 
