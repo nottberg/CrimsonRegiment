@@ -83,7 +83,7 @@ typedef enum LEDSequenceUpdateResultEnum
 class LEDSequence
 {
     private:
-        std::vector< LEDSequenceStep > stepList;
+        std::vector< LEDSequenceStep* > stepList;
 
         uint32_t activeStep;
 
@@ -95,7 +95,7 @@ class LEDSequence
         void clearDefinition();
 
         // Append a step to the sequence
-        void appendDefinitionStep( LEDSequenceStep &step );
+        void appendDefinitionStep( LEDSequenceStep *step );
 
         LS_SEQ_UPDATE_RESULT_T startSequence( struct timeval *curTime, LEDDriver *leds, CRLEDCommandPacket *cmdPkt );
 
@@ -129,7 +129,7 @@ class LEDSequencer : public EventNotify
         void clearSequence();
 
         void clearSequenceDefinition( uint32_t seqNumber );
-        void appendToSequenceDefinition( uint32_t seqNumber, LEDSequenceStep &step );
+        void appendToSequenceDefinition( uint32_t seqNumber, LEDSequenceStep *step );
 
         virtual void eventAction( uint32_t EventID );
 };

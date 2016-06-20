@@ -30,8 +30,8 @@ ClientMain::setup()
     eventSock.setup();
     loop.addSource( &eventSock );
 
-    LDStepWaitForStart startStep;
-    LDStepRegionOn     onStep;
+    LDStepWaitForStart *startStep = new LDStepWaitForStart;
+    LDStepRegionOn     *onStep    = new LDStepRegionOn; 
 
     sequencer.appendToSequenceDefinition( 0, startStep );
     sequencer.appendToSequenceDefinition( 0, onStep );

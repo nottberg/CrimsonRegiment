@@ -148,7 +148,7 @@ LEDSequence::clearDefinition()
 }
 
 void 
-LEDSequence::appendDefinitionStep( LEDSequenceStep &step )
+LEDSequence::appendDefinitionStep( LEDSequenceStep *step )
 {
    stepList.push_back( step );
 }
@@ -162,9 +162,9 @@ LEDSequence::startSequence( struct timeval *curTime, LEDDriver *leds, CRLEDComma
     activeStep = 0;
 
     // Initialize all of the steps
-    for( std::vector< LEDSequenceStep >::iterator it = stepList.begin(); it != stepList.end(); it++ )
+    for( std::vector< LEDSequenceStep* >::iterator it = stepList.begin(); it != stepList.end(); it++ )
     {
-        it->init( cmdPkt );
+        (*it)->init( cmdPkt );
     }
 
     // Run an update step in case we are behind
@@ -180,7 +180,7 @@ LEDSequence::updateStep( struct timeval *curTime, LEDDriver *leds )
         std::cout << "LEDSequence::updateStep" << std::endl;
 
         // Execute the current step and see what it indicates to do.
-        switch( stepList[ activeStep ].update( curTime, leds ) )
+        switch( stepList[ activeStep ]->update( curTime, leds ) )
         {
             // Done with the current step, move to the next one.
             case LS_STEP_UPDATE_RESULT_DONE:
@@ -285,7 +285,7 @@ LEDSequencer::clearSequenceDefinition( uint32_t seqNumber )
 }
 
 void 
-LEDSequencer::appendToSequenceDefinition( uint32_t seqNumber, LEDSequenceStep &step )
+LEDSequencer::appendToSequenceDefinition( uint32_t seqNumber, LEDSequenceStep *step )
 {
     // Do a sanity check to not allow a run-away number of sequences
     if( seqNumber >= 1000 )
