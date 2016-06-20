@@ -44,6 +44,8 @@ LDStepWaitForStart::init( CRLEDCommandPacket *cmdPkt )
 LS_STEP_UPDATE_RESULT_T 
 LDStepWaitForStart::update( struct timeval *curTime, LEDDriver *leds )
 {
+    std::cout << "LDStepWaitForStart::update" << std::endl;
+
     if( curTime->tv_sec > startTime.tv_sec )
         return LS_STEP_UPDATE_RESULT_DONE;
 
@@ -94,6 +96,9 @@ LDStepRegionOn::init( CRLEDCommandPacket *cmdPkt )
 LS_STEP_UPDATE_RESULT_T 
 LDStepRegionOn::update( struct timeval *curTime, LEDDriver *leds )
 {
+ 
+    std::cout << "LDStepRegionOn::update" << std::endl;
+
     for( int x = 0; x < 20; x++ )
     {
         leds->setPixel( x, 255, 255, 255 );
@@ -149,6 +154,8 @@ LEDSequence::appendDefinitionStep( LEDSequenceStep &step )
 LS_SEQ_UPDATE_RESULT_T 
 LEDSequence::startSequence( struct timeval *curTime, LEDDriver *leds, CRLEDCommandPacket *cmdPkt )
 {
+    std::cout << "LEDSequence::startSequence" << std::endl;
+
     // Back to the beginning
     activeStep = 0;
 
@@ -168,6 +175,8 @@ LEDSequence::updateStep( struct timeval *curTime, LEDDriver *leds )
     // Roll through steps until we are told to wait.
     while( (activeStep != LS_STEP_NOT_ACTIVE) && (activeStep < stepList.size() ) )
     {
+        std::cout << "LEDSequence::updateStep" << std::endl;
+
         // Execute the current step and see what it indicates to do.
         switch( stepList[ activeStep ].update( curTime, leds ) )
         {
@@ -232,6 +241,8 @@ void
 LEDSequencer::startSequence( uint32_t seqNumber, CRLEDCommandPacket *cmdPkt )
 {
     struct timeval curTime;
+
+    std::cout << "LEDSequencer::startSequence" << std::endl;
 
     if( seqNumber >= sequenceArray.size() )
         return;
