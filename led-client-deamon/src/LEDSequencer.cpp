@@ -50,12 +50,18 @@ LDStepWaitForStart::update( struct timeval *curTime, LEDDriver *leds )
     std::cout << curTime->tv_sec << ":" << startTime.tv_sec << std::endl;
     std::cout << curTime->tv_usec << ":" << startTime.tv_usec << std::endl;
 
+    // If we are already behind by a full sec, then trigger
     if( curTime->tv_sec > startTime.tv_sec )
         return LS_STEP_UPDATE_RESULT_DONE;
 
-    if( curTime->tv_usec > startTime.tv_usec )
-        return LS_STEP_UPDATE_RESULT_DONE;
+    // If the seconds is the same, check the usec instead.
+    if( curTime->tv_sec == startTime.tv_sec )
+    {    
+        if( curTime->tv_usec >= startTime.tv_usec )
+            return LS_STEP_UPDATE_RESULT_DONE;
+    }
 
+    // Otherwise keep waiting.
     return LS_STEP_UPDATE_RESULT_CONT;
 }
 
