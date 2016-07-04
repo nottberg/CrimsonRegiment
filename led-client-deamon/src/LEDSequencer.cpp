@@ -89,12 +89,36 @@ LDStepDelay::update( struct timeval *curTime, LEDDriver *leds )
 
 LDStepRegionOn::LDStepRegionOn()
 {
+    startIndex  = 0;
+    endIndex    = 20;
 
+    color.red   = 255;
+    color.green = 255;
+    color.blue  = 255;
 }
 
 LDStepRegionOn::~LDStepRegionOn()
 {
 
+}
+
+void 
+LDStepRegionOn::setStartIndex( uint32_t value )
+{
+    startIndex = value;
+}
+
+void 
+LDStepRegionOn::setEndIndex( uint32_t value )
+{
+    endIndex = value;
+}
+
+void 
+LDStepRegionOn::setBounds( uint32_t start, uint32_t end )
+{
+    startIndex = start;
+    endIndex   = end;
 }
 
 LS_STEP_UPDATE_RESULT_T 
@@ -109,9 +133,9 @@ LDStepRegionOn::update( struct timeval *curTime, LEDDriver *leds )
  
     std::cout << "LDStepRegionOn::update" << std::endl;
 
-    for( int x = 0; x < 20; x++ )
+    for( int x = startIndex; x < endIndex; x++ )
     {
-        leds->setPixel( x, 255, 255, 255 );
+        leds->setPixel( x, color.red, color.green, color.blue );
     }
 
     return LS_STEP_UPDATE_RESULT_DONE;

@@ -33,8 +33,18 @@ ClientMain::setup()
     LDStepWaitForStart *startStep = new LDStepWaitForStart;
     LDStepRegionOn     *onStep    = new LDStepRegionOn; 
 
+    onStep->setBounds( 0, 20 );
+
     sequencer.appendToSequenceDefinition( 0, startStep );
     sequencer.appendToSequenceDefinition( 0, onStep );
+
+    LDStepWaitForStart *startStep1 = new LDStepWaitForStart;
+    LDStepRegionOn     *onStep1    = new LDStepRegionOn; 
+
+    onStep1->setBounds( 0, 40 );
+
+    sequencer.appendToSequenceDefinition( 1, startStep1 );
+    sequencer.appendToSequenceDefinition( 1, onStep1 );
 }
 
 void 

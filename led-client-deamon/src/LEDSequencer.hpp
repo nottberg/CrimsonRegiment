@@ -62,10 +62,18 @@ class LDStepDelay : public LEDSequenceStep
 class LDStepRegionOn : public LEDSequenceStep
 {
     private:
+        uint32_t startIndex;
+        uint32_t endIndex;
+
+        PIXEL_ENTRY_T color;
 
     public:
         LDStepRegionOn();
        ~LDStepRegionOn();
+
+        void setStartIndex( uint32_t value );
+        void setEndIndex( uint32_t value );
+        void setBounds( uint32_t start, uint32_t end );
 
         virtual LS_STEP_UPDATE_RESULT_T init( CRLEDCommandPacket *cmdPkt );
 
