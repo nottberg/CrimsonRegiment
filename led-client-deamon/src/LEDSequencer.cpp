@@ -152,9 +152,18 @@ LDStepRegionChange::update( struct timeval *curTime, LEDDriver *leds )
     if( lastIndex >= leds->getPixelCount() )
         lastIndex = ( leds->getPixelCount() - 1 );
 
-    for( int x = startIndex; x < endIndex; x++ )
+    std::cout << startIndex << "  " << lastIndex << std::endl;
+
+    for( int x = startIndex; x < lastIndex; x++ )
     {
-        leds->setPixel( x, color.red, color.green, color.blue );
+        if( switchOn == true )
+        { 
+            leds->setPixel( x, color.red, color.green, color.blue );
+        }
+        else
+        {
+            leds->clearPixel( x );
+        }
     }
 
     return LS_STEP_UPDATE_RESULT_DONE;
@@ -237,6 +246,8 @@ LEDSequence::updateStep( struct timeval *curTime, LEDDriver *leds )
             case LS_STEP_UPDATE_RESULT_DONE:
             {
                 activeStep += 1;
+
+                std::cout << activeStep << "  " << stepList.size() << std::endl;
 
                 if( activeStep >= stepList.size() )
                     activeStep = LS_STEP_NOT_ACTIVE;
