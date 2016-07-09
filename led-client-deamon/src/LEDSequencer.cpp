@@ -87,51 +87,70 @@ LDStepDelay::update( struct timeval *curTime, LEDDriver *leds )
 
 }
 
-LDStepRegionOn::LDStepRegionOn()
+LDStepRegionChange::LDStepRegionChange()
 {
+    switchOn    = false;
+
     startIndex  = 0;
-    endIndex    = 20;
+    endIndex    = -1;
 
     color.red   = 255;
     color.green = 255;
     color.blue  = 255;
 }
 
-LDStepRegionOn::~LDStepRegionOn()
+LDStepRegionChange::~LDStepRegionChange()
 {
 
 }
 
 void 
-LDStepRegionOn::setStartIndex( uint32_t value )
+LDStepRegionChange::setOnOff( bool value )
+{
+    switchOn = value;
+}
+
+void 
+LDStepRegionChange::setStartIndex( uint32_t value )
 {
     startIndex = value;
 }
 
 void 
-LDStepRegionOn::setEndIndex( uint32_t value )
+LDStepRegionChange::setEndIndex( uint32_t value )
 {
     endIndex = value;
 }
 
 void 
-LDStepRegionOn::setBounds( uint32_t start, uint32_t end )
+LDStepRegionChange::setBounds( uint32_t start, uint32_t end )
 {
     startIndex = start;
     endIndex   = end;
 }
 
+void 
+LDStepRegionChange::setMaxBounds()
+{
+    startIndex = 0;
+    endIndex   = -1;
+}
+
 LS_STEP_UPDATE_RESULT_T 
-LDStepRegionOn::init( CRLEDCommandPacket *cmdPkt )
+LDStepRegionChange::init( CRLEDCommandPacket *cmdPkt )
 {
 
 }
 
 LS_STEP_UPDATE_RESULT_T 
-LDStepRegionOn::update( struct timeval *curTime, LEDDriver *leds )
+LDStepRegionChange::update( struct timeval *curTime, LEDDriver *leds )
 {
- 
-    std::cout << "LDStepRegionOn::update" << std::endl;
+    uint32_t lastIndex = endIndex;
+
+    std::cout << "LDStepRegionChange::update" << std::endl;
+
+    if( lastIndex >= leds->getPixelCount() )
+        lastIndex = ( leds->getPixelCount() - 1 );
 
     for( int x = startIndex; x < endIndex; x++ )
     {

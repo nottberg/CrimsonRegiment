@@ -31,20 +31,27 @@ ClientMain::setup()
     loop.addSource( &eventSock );
 
     LDStepWaitForStart *startStep = new LDStepWaitForStart;
-    LDStepRegionOn     *onStep    = new LDStepRegionOn; 
+    LDStepRegionChange *clearStep = new LDStepRegionChange; 
+    LDStepRegionChange *onStep    = new LDStepRegionChange; 
 
     onStep->setBounds( 0, 20 );
+    onStep->setOnOff( true );
 
     sequencer.appendToSequenceDefinition( 0, startStep );
+    sequencer.appendToSequenceDefinition( 0, clearStep );
     sequencer.appendToSequenceDefinition( 0, onStep );
 
     LDStepWaitForStart *startStep1 = new LDStepWaitForStart;
-    LDStepRegionOn     *onStep1    = new LDStepRegionOn; 
+    LDStepRegionChange *clearStep1 = new LDStepRegionChange; 
+    LDStepRegionChange *onStep1    = new LDStepRegionChange; 
 
     onStep1->setBounds( 0, 40 );
+    onStep1->setOnOff( true );
 
     sequencer.appendToSequenceDefinition( 1, startStep1 );
+    sequencer.appendToSequenceDefinition( 1, clearStep1 );
     sequencer.appendToSequenceDefinition( 1, onStep1 );
+
 }
 
 void 

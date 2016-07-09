@@ -41,6 +41,8 @@ class PixelBuffer
 
         void setGammaCorrection( double red, double green, double blue );
 
+        uint32_t getPixelCount();
+
         void clearAllPixels();
         void clearPixel( uint16_t pixelIndex );
 
@@ -69,6 +71,8 @@ class LEDDriver : public EventNotify
         void stop();
     
         void setGammaCorrection( double red, double green, double blue );
+
+        uint32_t getPixelCount();
 
         void clearAllPixels();
         void clearPixel( uint16_t pixelIndex );

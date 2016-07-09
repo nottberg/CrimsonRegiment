@@ -92,6 +92,12 @@ PixelBuffer::setGammaCorrection( double red, double green, double blue )
     gammaLookupInitialized = true;
 }
 
+uint32_t 
+PixelBuffer::getPixelCount()
+{
+    return ledCnt;
+}
+
 void
 PixelBuffer::clearAllPixels()
 {
@@ -202,6 +208,12 @@ void
 LEDDriver::setGammaCorrection( double red, double green, double blue )
 {
     pixelData.setGammaCorrection( red, green, blue );
+}
+
+uint32_t 
+LEDDriver::getPixelCount()
+{
+    return pixelData.getPixelCount();
 }
 
 void 
