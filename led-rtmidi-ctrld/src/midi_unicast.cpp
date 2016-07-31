@@ -131,8 +131,19 @@ int main( int argc, char **argv )
         nBytes = message.size();
         if( nBytes > 0 )
         {
-            int result;
+            int     result;
+            uint8_t direction = 0;
+            uint8_t key       = 0;
+            uint8_t intensity = 0;
+
             CRLEDCommandPacket cmdPkt;
+
+            if( nBytes >= 3 )
+            {
+                direction = message[0];
+                key       = message[1];
+                intensity = message[2];
+            }
 
             std::cout << "stamp = " << stamp << std::endl;
 
@@ -142,20 +153,44 @@ int main( int argc, char **argv )
             }
             std::cout << std::endl;
 
-            std::cout << "Sending start sequence: " << schSeqNum << std::endl;
+            // If it is not a key down then exit
+            if( direction != 0x90 )
+                continue;
 
-            cmdPkt.setOpCode( CRLED_CMDOP_SCHEDULE );
-            cmdPkt.setParam1( schSeqNum );
-            cmdPkt.setTSSec( curTime.tv_sec );
-            cmdPkt.setTSUSec( curTime.tv_usec );
+            switch( key )
+            {
+                case 0x25:
+                {
+                    std::cout << "Sending sequence: 0"<< std::endl;
 
-#if 0
-        std::cout << "Sending clear sequence" << std::endl;
+                    cmdPkt.setOpCode( CRLED_CMDOP_SCHEDULE );
+                    cmdPkt.setParam1( 0 );
+                    cmdPkt.setTSSec( curTime.tv_sec );
+                    cmdPkt.setTSUSec( curTime.tv_usec );
+                }
+                break;
 
-        cmdPkt.setOpCode( CRLED_CMDOP_CLEAR );
-        cmdPkt.setTSSec( curTime.tv_sec );
-        cmdPkt.setTSUSec( curTime.tv_usec );
-#endif
+                case 0x27:
+                {
+                    std::cout << "Sending sequence: 1"<< std::endl;
+
+                    cmdPkt.setOpCode( CRLED_CMDOP_SCHEDULE );
+                    cmdPkt.setParam1( 1 );
+                    cmdPkt.setTSSec( curTime.tv_sec );
+                    cmdPkt.setTSUSec( curTime.tv_usec );
+                }
+                break;
+
+                default:
+                {
+                    std::cout << "Sending clear sequence" << std::endl;
+
+                    cmdPkt.setOpCode( CRLED_CMDOP_CLEAR );
+                    cmdPkt.setTSSec( curTime.tv_sec );
+                    cmdPkt.setTSUSec( curTime.tv_usec );
+                }
+                break;
+            }
 
             for( std::vector< struct sockaddr_in >::iterator it = serverList.begin(); it != serverList.end(); it++ )
             {
