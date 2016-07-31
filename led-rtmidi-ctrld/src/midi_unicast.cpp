@@ -3,6 +3,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/timeb.h>
+#include <sys/time.h>
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <time.h>
@@ -157,6 +159,14 @@ int main( int argc, char **argv )
             if( direction != 0x90 )
                 continue;
 
+            // Get the current time.
+            if( gettimeofday( &curTime, NULL ) ) 
+            {
+                perror("gettimeofday()");
+                return 1;
+            }
+
+            // Determine which request is being made.
             switch( key )
             {
                 case 0x25:
