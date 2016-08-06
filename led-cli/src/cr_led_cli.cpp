@@ -15,9 +15,13 @@
 
 namespace po = boost::program_options;
 
+std::vector< struct sockaddr_in > serverList;
+
 int
 main( int argc, char **argv )
 {
+    struct sockaddr_in s;
+
     int schSeqNum;
     struct timeval curTime;
 
@@ -39,6 +43,21 @@ main( int argc, char **argv )
        return 1;
     }
 
+    // Fill the server list
+    memset( &s, '\0', sizeof( struct sockaddr_in ) );
+    s.sin_family = AF_INET;
+    s.sin_port   = (in_port_t)htons( 10260 );
+    inet_aton( "192.168.2.7", &s.sin_addr );
+
+    serverList.push_back( s );
+
+    memset( &s, '\0', sizeof( struct sockaddr_in ) );
+    s.sin_family = AF_INET;
+    s.sin_port   = (in_port_t)htons( 10260 );
+    inet_aton( "192.168.2.8", &s.sin_addr );
+
+    serverList.push_back( s );
+
     // Get the current time.
     if( gettimeofday( &curTime, NULL ) ) 
     {
@@ -48,7 +67,7 @@ main( int argc, char **argv )
 
     if( vm.count( "schedule" ) ) 
     {
-        struct sockaddr_in s;
+        //struct sockaddr_in s;
         int bcast_sock;
         int result;
         CRLEDCommandPacket cmdPkt;
@@ -62,22 +81,24 @@ main( int argc, char **argv )
 
         bcast_sock = socket( AF_INET, SOCK_DGRAM, 0 );
     
-        memset( &s, '\0', sizeof( struct sockaddr_in ) );
-        s.sin_family      = AF_INET;
-        s.sin_port        = (in_port_t)htons( 10260 );
-        inet_aton( "192.168.2.7", &s.sin_addr );
+        //memset( &s, '\0', sizeof( struct sockaddr_in ) );
+        //s.sin_family      = AF_INET;
+        //s.sin_port        = (in_port_t)htons( 10260 );
+        //inet_aton( "192.168.2.7", &s.sin_addr );
 
-        std::cout << "Send" << std::endl;
-
-        if( sendto( bcast_sock, cmdPkt.getMessageBuffer(), cmdPkt.getMessageLength(), 0, (struct sockaddr *)&s, sizeof(struct sockaddr_in) ) < 0 )
+        for( std::vector< struct sockaddr_in >::iterator it = serverList.begin(); it != serverList.end(); it++ )
         {
-            perror("sendto");
-            return 1;
+            std::cout << "Send" << std::endl;
+
+            if( sendto( bcast_sock, cmdPkt.getMessageBuffer(), cmdPkt.getMessageLength(), 0, (struct sockaddr *)&(*it), sizeof(struct sockaddr_in) ) < 0 )
+            {
+                perror("sendto");
+            }
         }
     } 
     else if( vm.count( "clear" ) )
     {
-        struct sockaddr_in s;
+        //struct sockaddr_in s;
         int bcast_sock;
         int result;
         CRLEDCommandPacket cmdPkt;
@@ -90,17 +111,19 @@ main( int argc, char **argv )
 
         bcast_sock = socket( AF_INET, SOCK_DGRAM, 0 );
     
-        memset( &s, '\0', sizeof( struct sockaddr_in ) );
-        s.sin_family      = AF_INET;
-        s.sin_port        = (in_port_t)htons( 10260 );
-        inet_aton( "192.168.2.7", &s.sin_addr );
+        //memset( &s, '\0', sizeof( struct sockaddr_in ) );
+        //s.sin_family      = AF_INET;
+        //s.sin_port        = (in_port_t)htons( 10260 );
+        //inet_aton( "192.168.2.7", &s.sin_addr );
 
-        std::cout << "Send" << std::endl;
-
-        if( sendto( bcast_sock, cmdPkt.getMessageBuffer(), cmdPkt.getMessageLength(), 0, (struct sockaddr *)&s, sizeof(struct sockaddr_in) ) < 0 )
+        for( std::vector< struct sockaddr_in >::iterator it = serverList.begin(); it != serverList.end(); it++ )
         {
-            perror("sendto");
-            return 1;
+            std::cout << "Send" << std::endl;
+
+            if( sendto( bcast_sock, cmdPkt.getMessageBuffer(), cmdPkt.getMessageLength(), 0, (struct sockaddr *)&(*it), sizeof(struct sockaddr_in) ) < 0 )
+            {
+                perror("sendto");
+            }
         }
     }
 
