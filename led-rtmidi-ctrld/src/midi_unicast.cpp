@@ -44,6 +44,7 @@ int main( int argc, char **argv )
 
     int schSeqNum;
     struct timeval curTime;
+    struct timeval futureTime;
 
     // Declare the supported options.
     po::options_description desc("Crimson Regiment LED command line control");
@@ -147,13 +148,13 @@ int main( int argc, char **argv )
                 intensity = message[2];
             }
 
-            std::cout << "stamp = " << stamp << std::endl;
+//            std::cout << "stamp = " << stamp << std::endl;
 
-            for( i=0; i<nBytes; i++ )
-            {
-                printf( "0x%x ", message[i] );
-            }
-            std::cout << std::endl;
+//            for( i=0; i<nBytes; i++ )
+//            {
+//                printf( "0x%x ", message[i] );
+//            }
+//            std::cout << std::endl;
 
             // If it is not a key down then exit
             if( direction != 0x90 )
@@ -166,6 +167,15 @@ int main( int argc, char **argv )
                 return 1;
             }
 
+            // Calculate a time in the future
+            futureTime.tv_sec  = curTime.tv_sec;
+            futureTime.tv_usec = curTime.tv_usec + (200 * 1000);
+            if( futureTime.tv_usec >= 1000000 )
+            {
+                futureTime.tv_sec  += 1;
+                futureTime.tv_usec -= 1000000; 
+            }  
+
             // Determine which request is being made.
             switch( key )
             {
@@ -175,8 +185,8 @@ int main( int argc, char **argv )
 
                     cmdPkt.setOpCode( CRLED_CMDOP_SCHEDULE );
                     cmdPkt.setParam1( 0 );
-                    cmdPkt.setTSSec( curTime.tv_sec );
-                    cmdPkt.setTSUSec( curTime.tv_usec );
+                    cmdPkt.setTSSec( futureTime.tv_sec );
+                    cmdPkt.setTSUSec( futureTime.tv_usec );
                 }
                 break;
 
@@ -186,8 +196,8 @@ int main( int argc, char **argv )
 
                     cmdPkt.setOpCode( CRLED_CMDOP_SCHEDULE );
                     cmdPkt.setParam1( 1 );
-                    cmdPkt.setTSSec( curTime.tv_sec );
-                    cmdPkt.setTSUSec( curTime.tv_usec );
+                    cmdPkt.setTSSec( futureTime.tv_sec );
+                    cmdPkt.setTSUSec( futureTime.tv_usec );
                 }
                 break;
 
@@ -197,8 +207,8 @@ int main( int argc, char **argv )
 
                     cmdPkt.setOpCode( CRLED_CMDOP_SCHEDULE );
                     cmdPkt.setParam1( 2 );
-                    cmdPkt.setTSSec( curTime.tv_sec );
-                    cmdPkt.setTSUSec( curTime.tv_usec );
+                    cmdPkt.setTSSec( futureTime.tv_sec );
+                    cmdPkt.setTSUSec( futureTime.tv_usec );
                 }
                 break;
 
@@ -208,8 +218,8 @@ int main( int argc, char **argv )
 
                     cmdPkt.setOpCode( CRLED_CMDOP_SCHEDULE );
                     cmdPkt.setParam1( 3 );
-                    cmdPkt.setTSSec( curTime.tv_sec );
-                    cmdPkt.setTSUSec( curTime.tv_usec );
+                    cmdPkt.setTSSec( futureTime.tv_sec );
+                    cmdPkt.setTSUSec( futureTime.tv_usec );
                 }
                 break;
 
@@ -218,8 +228,8 @@ int main( int argc, char **argv )
                     std::cout << "Sending clear sequence" << std::endl;
 
                     cmdPkt.setOpCode( CRLED_CMDOP_CLEAR );
-                    cmdPkt.setTSSec( curTime.tv_sec );
-                    cmdPkt.setTSUSec( curTime.tv_usec );
+                    cmdPkt.setTSSec( futureTime.tv_sec );
+                    cmdPkt.setTSUSec( futureTime.tv_usec );
                 }
                 break;
             }
