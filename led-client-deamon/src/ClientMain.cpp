@@ -52,6 +52,28 @@ ClientMain::setup()
     sequencer.appendToSequenceDefinition( 1, clearStep1 );
     sequencer.appendToSequenceDefinition( 1, onStep1 );
 
+    LDStepWaitForStart *startStep2 = new LDStepWaitForStart;
+    LDStepRegionChange *clearStep2 = new LDStepRegionChange; 
+    LDStepRegionChange *onStep2    = new LDStepRegionChange; 
+
+    onStep2->setBounds( 0, 60 );
+    onStep2->setOnOff( true );
+
+    sequencer.appendToSequenceDefinition( 2, startStep2 );
+    sequencer.appendToSequenceDefinition( 2, clearStep2 );
+    sequencer.appendToSequenceDefinition( 2, onStep2 );
+
+    LDStepWaitForStart *startStep3 = new LDStepWaitForStart;
+    LDStepRegionChange *clearStep3 = new LDStepRegionChange; 
+    LDStepRegionChange *onStep3    = new LDStepRegionChange; 
+
+    onStep3->setBounds( 0, 80 );
+    onStep3->setOnOff( true );
+
+    sequencer.appendToSequenceDefinition( 3, startStep3 );
+    sequencer.appendToSequenceDefinition( 3, clearStep3 );
+    sequencer.appendToSequenceDefinition( 3, onStep3 );
+
 }
 
 void 

@@ -191,6 +191,28 @@ int main( int argc, char **argv )
                 }
                 break;
 
+                case 0x29:
+                {
+                    std::cout << "Sending sequence: 2"<< std::endl;
+
+                    cmdPkt.setOpCode( CRLED_CMDOP_SCHEDULE );
+                    cmdPkt.setParam1( 2 );
+                    cmdPkt.setTSSec( curTime.tv_sec );
+                    cmdPkt.setTSUSec( curTime.tv_usec );
+                }
+                break;
+
+                case 0x2B:
+                {
+                    std::cout << "Sending sequence: 3"<< std::endl;
+
+                    cmdPkt.setOpCode( CRLED_CMDOP_SCHEDULE );
+                    cmdPkt.setParam1( 3 );
+                    cmdPkt.setTSSec( curTime.tv_sec );
+                    cmdPkt.setTSUSec( curTime.tv_usec );
+                }
+                break;
+
                 default:
                 {
                     std::cout << "Sending clear sequence" << std::endl;
