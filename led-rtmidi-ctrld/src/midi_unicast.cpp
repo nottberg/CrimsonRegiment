@@ -226,7 +226,8 @@ int main( int argc, char **argv )
                     // Send the command packet to all recipients
                     for( std::vector< struct sockaddr_in >::iterator it = serverList.begin(); it != serverList.end(); it++ )
                     {
-                        std::cout << "Send" << std::endl;
+                        char tmpBuf[64];
+                        std::cout << "Send: " << inet_ntop( AF_INET, &(it->sin_addr), tmpBuf, sizeof(tmpBuf) ) << std::endl;
 
                         if( sendto( sock, cmdPkt.getMessageBuffer(), cmdPkt.getMessageLength(), 0, (struct sockaddr *)&(*it), sizeof(struct sockaddr_in) ) < 0 )
                         {

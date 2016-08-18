@@ -18,7 +18,7 @@ CRLEDClientConfig::~CRLEDClientConfig()
 bool 
 CRLEDClientConfig::setAddressFromIPV4Str( const char *value )
 {
-    inet_pton( AF_INET, value, &addr );
+    inet_pton( AF_INET, value, &(addr.sin_addr) );
     return false;
 }
 
@@ -176,12 +176,11 @@ bool
 CRLEDConfigFile::parseClientNode( void *clientPtr )
 {
     xmlNode *nodePtr = NULL;
+    CRLEDClientConfig clientRecord;
 
     // Traverse the document to pull out the items of interest
     for( nodePtr = ((xmlNode *)clientPtr)->children; nodePtr; nodePtr = nodePtr->next ) 
     {
-        CRLEDClientConfig clientRecord;
-
         if( nodePtr->type == XML_ELEMENT_NODE ) 
         {
             printf( "node type: Element, name: %s\n", nodePtr->name );
@@ -229,9 +228,9 @@ CRLEDConfigFile::parseClientNode( void *clientPtr )
                 }
             }
         }
-
-        clientList.push_back( clientRecord );
     }
+
+    clientList.push_back( clientRecord );
 }
 
 bool 
@@ -259,18 +258,19 @@ CRLEDConfigFile::parseMidiKey( void *keyPtr, CRLEDMidiKeyBinding &keyBinding )
 {
     xmlNode  *nodePtr = NULL;
     xmlChar  *kcStr;
-    uint32_t  keyCode;
 
     // Extract the keycode
     kcStr = xmlGetProp( (xmlNode *)keyPtr, (xmlChar *)"code" );
 
-    if( kcStr == NULL )
-        return true;
+    if( kcStr != NULL )
+    {
+        uint32_t  keyCode;
 
-    keyCode = strtol( (const char *)kcStr, NULL, 0 );
-    xmlFree( kcStr );
+        keyCode = strtol( (const char *)kcStr, NULL, 0 );
+        xmlFree( kcStr );
 
-    keyBinding.setKeyCode( keyCode );
+        keyBinding.setKeyCode( keyCode );
+    }
 
     // Traverse the document to pull out the items of interest
     for( nodePtr = ((xmlNode *)keyPtr)->children; nodePtr; nodePtr = nodePtr->next ) 
@@ -348,6 +348,8 @@ CRLEDConfigFile::parseMidiKeyMap( void *mapPtr )
 {
     xmlNode *nodePtr = NULL;
 
+    printf( "parseMidiKeyMap\n" );
+
     // Traverse the document to pull out the items of interest
     for( nodePtr = ((xmlNode *)mapPtr)->children; nodePtr; nodePtr = nodePtr->next ) 
     {
@@ -411,7 +413,7 @@ CRLEDConfigFile::load()
             {
                 parseClientList( cur_node );
             }
-            else if( xmlStrEqual( cur_node->name, (xmlChar *)"midi-key-map" ) == 0 )
+            else if( xmlStrEqual( cur_node->name, (xmlChar *)"midi-key-map" ) )
             {
                 parseMidiKeyMap( cur_node );
             } 
@@ -441,6 +443,7 @@ CRLEDConfigFile::getLEDEndpointAddrList( std::vector< struct sockaddr_in > &addr
 
     for( std::vector< CRLEDClientConfig >::iterator it = clientList.begin(); it != clientList.end(); it++ )
     {
+        printf( "getLEDEndpointAddrList\n" );
         it->getLEDEndpointAddress( addr );
         addrList.push_back( addr );
     }
