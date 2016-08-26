@@ -81,7 +81,7 @@ TimerEventSource::afterObservers( const int arg1, short int which )
     //printf( "timer cb: %d, %d\n", CLOCK_TV.tv_sec, CLOCK_TV.tv_usec );
 
     // Calculate the time to the next 100ms boundary
-    NEW_TV.tv_usec = ( ( CLOCK_TV.tv_usec / 100000 ) * 100000 ) + 100000;
+    NEW_TV.tv_usec = ( ( CLOCK_TV.tv_usec / 1000 ) * 1000 ) + 1000;
     NEW_TV.tv_sec  = CLOCK_TV.tv_sec;
 
     if( NEW_TV.tv_usec >= 1000000 )
