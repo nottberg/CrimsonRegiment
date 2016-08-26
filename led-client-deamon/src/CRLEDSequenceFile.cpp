@@ -174,7 +174,7 @@ CRLSSRegionChange::parseRangeEntry( void *rangeNode )
 
                 cStr = xmlNodeGetContent( nodePtr );
 
-                entry.startIndex = strtol( (const char *)cStr, NULL, 0 );
+                entry.endIndex = strtol( (const char *)cStr, NULL, 0 );
 
                 xmlFree( cStr );
             } 
@@ -460,6 +460,8 @@ CRLSeqRecord::initialize()
         CRLStepFactory::freeStep( *it );
     }
 
+    printf( "initialize\n" );
+
     stepList.clear();
 }
 
@@ -549,7 +551,9 @@ void
 CRLSeqNode::setMaximumSequenceIndex( uint32_t value )
 {
     maxSeqIndx = value;
-    seqList.reserve( maxSeqIndx );
+    seqList.resize( maxSeqIndx );
+
+    printf( "setMaximumSequenceIndex: %d, %d\n", value, seqList.size() );
 }
 
 uint32_t 
@@ -563,6 +567,8 @@ CRLSeqNode::newSequence( uint32_t seqIndx )
 {
     if( seqIndx >= maxSeqIndx )
         return;
+
+    printf( "newSequence: %d, %d\n", seqIndx, seqList.size() );
 
     seqList[seqIndx].initialize();
 }
@@ -714,6 +720,8 @@ CRLEDSequenceFile::parseSequence( void *seqPtr, CRLSeqNode &node )
     // Extract the keycode
     kcStr = xmlGetProp( (xmlNode *)seqPtr, (xmlChar *)"index" );
 
+    printf( "parseseq index: %s\n", kcStr );
+
     if( kcStr == NULL )
     {
         return true;
@@ -724,6 +732,7 @@ CRLEDSequenceFile::parseSequence( void *seqPtr, CRLSeqNode &node )
 
     node.newSequence( index );
 
+    printf( "parseseq index2: %d\n", index );
 #if 0
         <clear/>
         <region-change>
@@ -883,6 +892,8 @@ CRLEDSequenceFile::load( std::string nodeID )
     // Free the global variables that may
     // have been allocated by the parser.
     xmlCleanupParser();
+
+    printf( "Sequence File load complete\n" );
 
     return false;
 }
