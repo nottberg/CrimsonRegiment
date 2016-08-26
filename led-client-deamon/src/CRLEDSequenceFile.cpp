@@ -193,7 +193,7 @@ CRLSSRegionChange::parseRangeEntry( void *rangeNode )
                         {
                             xmlChar *cStr;
 
-                            cStr = xmlNodeGetContent( nodePtr );
+                            cStr = xmlNodeGetContent( colorPtr );
 
                             uint32_t value = strtol( (const char *)cStr, NULL, 0 );
 
@@ -208,7 +208,7 @@ CRLSSRegionChange::parseRangeEntry( void *rangeNode )
                         {
                             xmlChar *cStr;
 
-                            cStr = xmlNodeGetContent( nodePtr );
+                            cStr = xmlNodeGetContent( colorPtr );
 
                             uint32_t value = strtol( (const char *)cStr, NULL, 0 );
 
@@ -223,7 +223,7 @@ CRLSSRegionChange::parseRangeEntry( void *rangeNode )
                         {
                             xmlChar *cStr;
 
-                            cStr = xmlNodeGetContent( nodePtr );
+                            cStr = xmlNodeGetContent( colorPtr );
 
                             uint32_t value = strtol( (const char *)cStr, NULL, 0 );
 
@@ -313,7 +313,7 @@ CRLSSRegionChange::updateRT( struct timeval *curTime, LEDDriver *leds )
         if( lastIndex >= leds->getPixelCount() )
             lastIndex = ( leds->getPixelCount() - 1 );
 
-        std::cout << it->startIndex << "  " << lastIndex << std::endl;
+        std::cout << it->startIndex << "  " << lastIndex << "  " << (uint32_t)it->red << " " << (uint32_t)it->green << " " << (uint32_t)it->blue <<  std::endl;
 
         for( int x = it->startIndex; x < lastIndex; x++ )
         { 
