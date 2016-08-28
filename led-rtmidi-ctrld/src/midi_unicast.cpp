@@ -14,7 +14,11 @@
 #include <iostream>
 #include <cstdlib>
 #include <signal.h>
+
+#include "CRLEDConfigFile.hpp"
+
 #include "RtMidi.h"
+
 bool done;
 static void finish(int ignore){ done = true; }
 
@@ -35,6 +39,7 @@ std::vector< struct sockaddr_in > serverList;
 
 int main( int argc, char **argv )
 {
+    CRLEDConfigFile cfgFile;
     RtMidiIn *midiin = new RtMidiIn();
     std::vector<unsigned char> message;
     int nBytes, i, sock;
@@ -64,7 +69,13 @@ int main( int argc, char **argv )
        return 1;
     }
 
+    // Attempt to load the configuration
+    cfgFile.load();
+
     // Fill the server list
+    cfgFile.getLEDEndpointAddrList( serverList );
+
+#if 0
     memset( &s, '\0', sizeof( struct sockaddr_in ) );
     s.sin_family = AF_INET;
     s.sin_port   = (in_port_t)htons( 10260 );
@@ -78,7 +89,7 @@ int main( int argc, char **argv )
     inet_aton( "192.168.2.8", &s.sin_addr );
 
     serverList.push_back( s );
-
+#endif
 #if 0
   struct sockaddr_in addr;
   struct sockaddr_in addr2;
