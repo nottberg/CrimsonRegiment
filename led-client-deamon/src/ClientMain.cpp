@@ -21,6 +21,13 @@ ClientMain::~ClientMain()
 bool 
 ClientMain::setup()
 {
+    // Load the client configuration file
+    config.load();
+
+    // Load the sequence file
+    seqConfig.load( config.getID() );
+
+    // Setup the sequencer
     sequencer.setDriver( &driver );
 
     driver.start( loop );

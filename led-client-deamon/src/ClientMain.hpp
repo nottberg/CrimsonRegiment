@@ -1,6 +1,8 @@
 #ifndef __CLIENTMAIN_H__
 #define __CLIENTMAIN_H__
 
+#include "CRLEDClientConfigFile.hpp"
+#include "CRLEDSequenceFile.hpp"
 #include "EventLoop.hpp"
 #include "ClientEvents.hpp"
 #include "ledDriver.hpp"
@@ -9,6 +11,9 @@
 class ClientMain : public EventNotify
 {
     private:
+        CRLEDClientConfigFile config;
+        CRLEDSequenceFile     seqConfig;
+
         EventLoop         loop;
 
         LEDDriver         driver;
