@@ -41,6 +41,121 @@ CRLEDClientConfig::getLEDEndpointAddress( sockaddr_in &rtnaddr )
     return false;
 }
 
+CRLEDMidiKeyBinding::CRLEDMidiKeyBinding()
+{
+    clear();
+}
+
+CRLEDMidiKeyBinding::~CRLEDMidiKeyBinding()
+{
+
+}
+
+
+void 
+CRLEDMidiKeyBinding::clear()
+{
+    keyCode    = 0;
+    action     = MMK_ACTION_NOP;
+    command    = MMK_CMD_NOT_SET;
+    param1     = 0;
+    startDelay = 200;
+}
+
+void 
+CRLEDMidiKeyBinding::setKeyCode( uint32_t value )
+{
+    keyCode = value;
+}
+
+void 
+CRLEDMidiKeyBinding::setAction( MMK_ACTION_T value )
+{
+    action = value;
+}
+
+void 
+CRLEDMidiKeyBinding::setCommand( MMK_CMD_T value )
+{
+    command = value;
+}
+
+void 
+CRLEDMidiKeyBinding::setParam1( uint32_t value )
+{
+    param1 = value;
+}
+
+void 
+CRLEDMidiKeyBinding::setStartDelay( uint32_t value )
+{
+    startDelay = value;
+}
+
+uint32_t 
+CRLEDMidiKeyBinding::getKeyCode()
+{
+    return keyCode;
+}
+
+MMK_ACTION_T 
+CRLEDMidiKeyBinding::getAction()
+{
+    return action;
+}
+
+MMK_CMD_T 
+CRLEDMidiKeyBinding::getCommand()
+{
+    return command;
+}
+
+uint32_t 
+CRLEDMidiKeyBinding::getParam1()
+{
+    return param1;
+}
+
+uint32_t 
+CRLEDMidiKeyBinding::getStartDelay()
+{
+    return startDelay;
+}
+
+CRLEDMidiKeyMap::CRLEDMidiKeyMap()
+{
+
+}
+
+CRLEDMidiKeyMap::~CRLEDMidiKeyMap()
+{
+}
+
+void 
+CRLEDMidiKeyMap::setKeyBinding( uint32_t keycode, CRLEDMidiKeyBinding &value )
+{
+    keyMap.insert( std::pair< uint32_t, CRLEDMidiKeyBinding >( value.getKeyCode(), value ) );
+}
+
+void 
+CRLEDMidiKeyMap::setDefaultKeyBinding( CRLEDMidiKeyBinding &value )
+{
+    defaultKey = value;
+}
+
+CRLEDMidiKeyBinding& 
+CRLEDMidiKeyMap::getKeyBinding( uint32_t keyCode )
+{
+    std::map< uint32_t, CRLEDMidiKeyBinding >::iterator it = keyMap.find( keyCode );
+
+    if( it == keyMap.end() )
+    {
+        return defaultKey;
+    }
+
+    return it->second;
+}
+
 CRLEDConfigFile::CRLEDConfigFile()
 {
 
@@ -56,13 +171,6 @@ CRLEDConfigFile::setConfigFilePath()
 {
 
 }
-
-/*
-    <client>
-      <addr type="ipv4">192.168.2.7</addr>
-      <port type="led">10000</port>
-    </client>
-*/
 
 bool 
 CRLEDConfigFile::parseClientNode( void *clientPtr )
@@ -147,6 +255,128 @@ CRLEDConfigFile::parseClientList( void *listPtr )
 }
 
 bool 
+CRLEDConfigFile::parseMidiKey( void *keyPtr, CRLEDMidiKeyBinding &keyBinding )
+{
+    xmlNode  *nodePtr = NULL;
+    xmlChar  *kcStr;
+    uint32_t  keyCode;
+
+    // Extract the keycode
+    kcStr = xmlGetProp( (xmlNode *)keyPtr, (xmlChar *)"code" );
+
+    if( kcStr == NULL )
+        return true;
+
+    keyCode = strtol( (const char *)kcStr, NULL, 0 );
+    xmlFree( kcStr );
+
+    keyBinding.setKeyCode( keyCode );
+
+    // Traverse the document to pull out the items of interest
+    for( nodePtr = ((xmlNode *)keyPtr)->children; nodePtr; nodePtr = nodePtr->next ) 
+    {
+
+        if( nodePtr->type == XML_ELEMENT_NODE ) 
+        {
+            printf( "node type: Element, name: %s\n", nodePtr->name );
+
+            if( xmlStrEqual( nodePtr->name, (xmlChar *)"action" ) )
+            {
+                xmlChar *cStr;
+
+                cStr = xmlNodeGetContent( nodePtr );
+
+                if( xmlStrEqual( cStr, (xmlChar *)"send-all" ) )
+                {
+                    keyBinding.setAction( MMK_ACTION_SEND_ALL );
+                }
+                else
+                {
+                    keyBinding.setAction( MMK_ACTION_NOP );
+                }
+
+                xmlFree( cStr );
+            }
+            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"cmd" ) )
+            {
+                xmlChar *cStr;
+
+                cStr = xmlNodeGetContent( nodePtr );
+
+                if( xmlStrEqual( cStr, (xmlChar *)"schedule" ) )
+                {
+                    keyBinding.setCommand( MMK_CMD_SCHEDULE );
+                }
+                else
+                {
+                    keyBinding.setCommand( MMK_CMD_CLEAR );
+                }
+
+                xmlFree( cStr );
+            }
+            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"param1" ) )
+            {
+                xmlChar *cStr;
+                uint32_t value;
+
+                cStr = xmlNodeGetContent( nodePtr );
+
+                value = strtol( (const char *)cStr, NULL, 0 );
+                keyBinding.setParam1( value );
+
+                xmlFree( cStr );
+            }
+            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"start-delay" ) )
+            {
+                xmlChar *cStr;
+                uint32_t value;
+
+                cStr = xmlNodeGetContent( nodePtr );
+
+                value = strtol( (const char *)cStr, NULL, 0 );
+                keyBinding.setStartDelay( value );
+
+                xmlFree( cStr );
+            }
+        }
+
+    }
+}
+
+bool 
+CRLEDConfigFile::parseMidiKeyMap( void *mapPtr )
+{
+    xmlNode *nodePtr = NULL;
+
+    // Traverse the document to pull out the items of interest
+    for( nodePtr = ((xmlNode *)mapPtr)->children; nodePtr; nodePtr = nodePtr->next ) 
+    {
+        if( nodePtr->type == XML_ELEMENT_NODE ) 
+        {
+            printf( "node type: Element, name: %s\n", nodePtr->name );
+
+            if( xmlStrEqual( nodePtr->name, (xmlChar *)"key" ) )
+            {
+                CRLEDMidiKeyBinding keyBinding;
+       
+                parseMidiKey( nodePtr, keyBinding );
+
+                keyMap.setKeyBinding( keyBinding.getKeyCode(), keyBinding );
+            }
+            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"key-default" ) )
+            {
+                CRLEDMidiKeyBinding keyBinding;
+       
+                parseMidiKey( nodePtr, keyBinding );
+
+                keyMap.setDefaultKeyBinding( keyBinding );
+            }
+
+        }
+    }
+}
+
+bool 
 CRLEDConfigFile::load()
 {
     xmlDoc  *doc          = NULL;
@@ -181,10 +411,10 @@ CRLEDConfigFile::load()
             {
                 parseClientList( cur_node );
             }
-//            else if( xmlStrCmp( cur_node->name, "" ) == 0 )
-//            {
-
-//            } 
+            else if( xmlStrEqual( cur_node->name, (xmlChar *)"midi-key-map" ) == 0 )
+            {
+                parseMidiKeyMap( cur_node );
+            } 
 
         }
 
@@ -214,6 +444,12 @@ CRLEDConfigFile::getLEDEndpointAddrList( std::vector< struct sockaddr_in > &addr
         it->getLEDEndpointAddress( addr );
         addrList.push_back( addr );
     }
+}
+
+CRLEDMidiKeyBinding& 
+CRLEDConfigFile::getKeyBinding( uint32_t keyCode )
+{
+    return keyMap.getKeyBinding( keyCode );
 }
 
 

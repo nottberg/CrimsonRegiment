@@ -178,15 +178,70 @@ int main( int argc, char **argv )
                 return 1;
             }
 
-            // Calculate a time in the future
-            futureTime.tv_sec  = curTime.tv_sec;
-            futureTime.tv_usec = curTime.tv_usec + (200 * 1000);
-            if( futureTime.tv_usec >= 1000000 )
-            {
-                futureTime.tv_sec  += 1;
-                futureTime.tv_usec -= 1000000; 
-            }  
+            // Get the key mapping information
+            CRLEDMidiKeyBinding& keyInfo = cfgFile.getKeyBinding( key );
 
+            switch( keyInfo.getAction() )
+            {
+                case MMK_ACTION_SEND_ALL:
+                {
+                    // Calculate a time in the future for the nodes to take action, start delay is in milliseconds.
+                    futureTime.tv_sec  = curTime.tv_sec;
+                    futureTime.tv_usec = curTime.tv_usec + ( keyInfo.getStartDelay() * 1000 );
+                    if( futureTime.tv_usec >= 1000000 )
+                    {
+                        futureTime.tv_sec  += 1;
+                        futureTime.tv_usec -= 1000000; 
+                    }  
+
+                    // 
+                    switch( keyInfo.getCommand() )
+                    {    
+                        case MMK_CMD_SCHEDULE:
+                        {
+                            std::cout << "Schedule sequence: " << keyInfo.getParam1() << std::endl;
+
+                            cmdPkt.setOpCode( CRLED_CMDOP_SCHEDULE );
+                            cmdPkt.setParam1( keyInfo.getParam1() );
+                            cmdPkt.setTSSec( futureTime.tv_sec );
+                            cmdPkt.setTSUSec( futureTime.tv_usec );
+                        }
+                        break;
+
+                        case MMK_CMD_CLEAR:
+                        {
+                            std::cout << "Sending clear sequence" << std::endl;
+
+                            cmdPkt.setOpCode( CRLED_CMDOP_CLEAR );
+                            cmdPkt.setTSSec( futureTime.tv_sec );
+                            cmdPkt.setTSUSec( futureTime.tv_usec );
+                        }
+                        break;
+
+                        default:
+                        case MMK_CMD_NOT_SET:
+                        break;
+                    }
+
+                    // Send the command packet to all recipients
+                    for( std::vector< struct sockaddr_in >::iterator it = serverList.begin(); it != serverList.end(); it++ )
+                    {
+                        std::cout << "Send" << std::endl;
+
+                        if( sendto( sock, cmdPkt.getMessageBuffer(), cmdPkt.getMessageLength(), 0, (struct sockaddr *)&(*it), sizeof(struct sockaddr_in) ) < 0 )
+                        {
+                            perror("sendto");
+                        }
+                    }
+
+                }
+                break;
+
+                default:
+                break;
+            }
+
+#if 0
             // Determine which request is being made.
             switch( key )
             {
@@ -254,6 +309,7 @@ int main( int argc, char **argv )
                     perror("sendto");
                 }
             }
+#endif
 #if 0
             /* send */
             addr.sin_addr.s_addr = inet_addr(EXAMPLE_ADDR);
