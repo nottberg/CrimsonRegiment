@@ -17,8 +17,10 @@ typedef enum LEDDriverProtocolTypeEnum
 
 class PixelBuffer
 {
+    private:
+        uint32_t ledCnt;
+
     protected:
-        int      ledCnt;
 
         size_t   bufLength;
         uint8_t *bufPtr;

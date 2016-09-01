@@ -29,6 +29,8 @@ PixelBuffer::~PixelBuffer()
 void
 PixelBuffer::initialize( uint16_t ledCount )
 {
+    printf( "PixelBuffer::intialize: %d\n", ledCount );
+
     // Remember the number of leds in the string
     ledCnt = ledCount;
 
@@ -89,6 +91,8 @@ PixelBuffer::getPixelCount()
 void
 PixelBuffer::clearAllPixels()
 {
+    std::cout << "PixelBuffer::clearAllPixels: " << ledCnt << std::endl;
+
     // Initialize all of the pixels to black
     for( uint32_t i = 0; i < ledCnt; i++ )
     {
@@ -135,11 +139,13 @@ PixelBufferLPD8806::~PixelBufferLPD8806()
 void
 PixelBufferLPD8806::initialize( uint16_t ledCount )
 {
+    printf( "PixelBufferLPD8806::intialize: %d\n", ledCount );
+
     // Remember the number of leds in the string
-    PixelBuffer::initialize( ledCnt );
+    PixelBuffer::initialize( ledCount );
 
     // Allocate a buffer to hold the led info.
-    bufLength = ( ledCnt + 3 ) * sizeof( PIXEL_ENTRY_LPD8806_T );
+    bufLength = ( getPixelCount() + 3 ) * sizeof( PIXEL_ENTRY_LPD8806_T );
     bufPtr = (uint8_t *) malloc( bufLength );
   
     if( bufPtr == NULL ) 
@@ -163,7 +169,7 @@ PixelBufferLPD8806::writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green,
 {
     PIXEL_ENTRY_LPD8806_T *p = (PIXEL_ENTRY_LPD8806_T *)( bufPtr + ( ( pixelIndex + 3 ) * sizeof( PIXEL_ENTRY_LPD8806_T )  ) );
 
-    if( pixelIndex >= ledCnt )
+    if( pixelIndex >= getPixelCount() )
         return;
 
     p->blue  = 0x80 | ( blue & 0x7F );
@@ -178,7 +184,7 @@ PixelBufferLPD8806::writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t g
 {
     PIXEL_ENTRY_LPD8806_T *p = (PIXEL_ENTRY_LPD8806_T *)( bufPtr + ( ( pixelIndex + 3 ) * sizeof( PIXEL_ENTRY_LPD8806_T )  ) );
 
-    if( pixelIndex >= ledCnt )
+    if( pixelIndex >= getPixelCount() )
         return;
 
     p->blue  = blueGammaLookup[ blue ];
@@ -201,17 +207,19 @@ PixelBufferAPA102::~PixelBufferAPA102()
 void
 PixelBufferAPA102::initialize( uint16_t ledCount )
 {
+    printf( "PixelBufferAPA102::intialize: %d\n", ledCount );
+
     // Remember the number of leds in the string
-    PixelBuffer::initialize( ledCnt );
+    PixelBuffer::initialize( ledCount );
 
     // For APA-102 we need one 32-bit start word,
     // followed by 32-bits per pixel,
     // followed by at least (ledCnt/2) bits of 1s to
     // generate the forwarding clocks to end of strip.
     bufLength  = 4;
-    bufLength += (4 * ledCnt);
+    bufLength += ( 4 * getPixelCount() );
 
-    uint32_t trailCnt = (( ledCnt / 2 ) / 8 ) + 1; // Add a 1 byte pad to round up.
+    uint32_t trailCnt = (( getPixelCount() / 2 ) / 8 ) + 1; // Add a 1 byte pad to round up.
     bufLength += trailCnt; 
 
     bufPtr = (uint8_t *) malloc( bufLength );
@@ -226,7 +234,7 @@ PixelBufferAPA102::initialize( uint16_t ledCount )
     bzero( bufPtr, bufLength );
 
     // Write the ones at the end
-    uint8_t *trailPtr = &bufPtr[ 4+(4*ledCnt) ]; 
+    uint8_t *trailPtr = &bufPtr[ 4+(4*getPixelCount()) ]; 
     for( uint32_t i = 0; i < trailCnt; i++ )
     {
         *trailPtr = 0xFF;
@@ -245,8 +253,12 @@ PixelBufferAPA102::writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, 
 {
     PIXEL_ENTRY_APA102_T *p = (PIXEL_ENTRY_APA102_T *)( bufPtr + ( 4 + ( 4 * pixelIndex ) ) );
 
-    if( pixelIndex >= ledCnt )
+    printf( "apa102 - writePixel: %d  %d\n", pixelIndex, getPixelCount() );
+
+    if( pixelIndex >= getPixelCount() )
         return;
+
+    printf( "apa102 - writePixel: 0x%x  0x%x\n", bufPtr, p );
 
     p->global = 0xFF;
     p->blue   = blue;
@@ -261,7 +273,7 @@ PixelBufferAPA102::writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t gr
 {
     PIXEL_ENTRY_APA102_T *p = (PIXEL_ENTRY_APA102_T *)( bufPtr + ( 4 + ( 4 * pixelIndex ) ) );
 
-    if( pixelIndex >= ledCnt )
+    if( pixelIndex >= getPixelCount() )
         return;
 
     p->global = 0xFF;
