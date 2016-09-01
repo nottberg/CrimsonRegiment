@@ -11,18 +11,55 @@
 #include <string>
 #include <map>
 
+class CRLSeqStep
+{
+    private:
+
+    public:
+        CRLSeqStep();
+       ~CRLSeqStep();
+
+        virtual bool initFromStepNode( void *stepPtr ); 
+};
+
+class CRLSeqRecord
+{
+    private:
+        std::vector< CRLSeqStep > stepList;
+
+    public:
+        CRLSeqRecord();
+       ~CRLSeqRecord();
+};
+
+class CRLSeqNode
+{
+    private:
+        std::string nodeID;
+
+        std::vector< CRLSeqRecord > seqList;
+
+    public:
+        CRLSeqNode();
+       ~CRLSeqNode();
+
+        void setID( std::string value );
+        std::string getID();
+
+        void startSequence( uint32_t seqIndx );
+        void appendStepToSequence( uint32_t seqIndx, CRLSeqStep *stepObj );
+};
+
 class CRLEDSequenceFile
 {
     private:
-//        std::vector< CRLEDClientConfig > clientList;
+        std::map< std::string, CRLSeqNode> nodeMap;
 
-//        CRLEDMidiKeyMap keyMap;
+        CRLSeqStep* createStepForType( std::string typeStr );
 
-//        bool parseClientNode( void *clientPtr );
-//        bool parseClientList( void *listPtr );
-
-//        bool parseMidiKey( void *keyPtr, CRLEDMidiKeyBinding &value );
-//        bool parseMidiKeyMap( void *mapPtr );
+        bool parseSequence( void *seqPtr, CRLSeqNode &node );
+        bool parseNode( void *nodePtr, CRLSeqNode &node );
+        bool parseNodeList( void *listPtr, std::string nodeID );
 
     public:
         CRLEDSequenceFile();
@@ -30,11 +67,8 @@ class CRLEDSequenceFile
 
         void setSequenceFilePath();
 
-        bool load( std::string nodeid );
+        bool load( std::string nodeID );
 
-//        bool getLEDEndpointAddrList( std::vector< struct sockaddr_in > &addrList ); 
-
-//        CRLEDMidiKeyBinding& getKeyBinding( uint32_t keyCode );
 };
 
 #endif // __CRLED_SEQUENCE_FILE_HPP__

@@ -5,6 +5,48 @@
 
 #include "CRLEDSequenceFile.hpp"
 
+CRLSeqStep::CRLSeqStep()
+{
+
+}
+
+CRLSeqStep::~CRLSeqStep()
+{
+
+}
+
+CRLSeqRecord::CRLSeqRecord()
+{
+//std::vector< CRLSeqStep > stepList;
+}
+
+CRLSeqRecord::~CRLSeqRecord()
+{
+
+}
+
+CRLSeqNode::CRLSeqNode()
+{
+// std::string nodeID;
+// std::vector< CRLSeqRecord > seqList;
+}
+
+CRLSeqNode::~CRLSeqNode()
+{
+
+}
+
+void 
+CRLSeqNode::setID( std::string value )
+{
+    nodeID = value;
+}
+
+std::string 
+CRLSeqNode::getID()
+{
+    return nodeID;
+}
 
 CRLEDSequenceFile::CRLEDSequenceFile()
 {
@@ -103,135 +145,132 @@ CRLEDSequenceFile::parseClientList( void *listPtr )
         }
     }
 }
-
-bool 
-CRLEDSequenceFile::parseMidiKey( void *keyPtr, CRLEDMidiKeyBinding &keyBinding )
-{
-    xmlNode  *nodePtr = NULL;
-    xmlChar  *kcStr;
-
-    // Extract the keycode
-    kcStr = xmlGetProp( (xmlNode *)keyPtr, (xmlChar *)"code" );
-
-    if( kcStr != NULL )
-    {
-        uint32_t  keyCode;
-
-        keyCode = strtol( (const char *)kcStr, NULL, 0 );
-        xmlFree( kcStr );
-
-        keyBinding.setKeyCode( keyCode );
-    }
-
-    // Traverse the document to pull out the items of interest
-    for( nodePtr = ((xmlNode *)keyPtr)->children; nodePtr; nodePtr = nodePtr->next ) 
-    {
-
-        if( nodePtr->type == XML_ELEMENT_NODE ) 
-        {
-            printf( "node type: Element, name: %s\n", nodePtr->name );
-
-            if( xmlStrEqual( nodePtr->name, (xmlChar *)"action" ) )
-            {
-                xmlChar *cStr;
-
-                cStr = xmlNodeGetContent( nodePtr );
-
-                if( xmlStrEqual( cStr, (xmlChar *)"send-all" ) )
-                {
-                    keyBinding.setAction( MMK_ACTION_SEND_ALL );
-                }
-                else
-                {
-                    keyBinding.setAction( MMK_ACTION_NOP );
-                }
-
-                xmlFree( cStr );
-            }
-            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"cmd" ) )
-            {
-                xmlChar *cStr;
-
-                cStr = xmlNodeGetContent( nodePtr );
-
-                if( xmlStrEqual( cStr, (xmlChar *)"schedule" ) )
-                {
-                    keyBinding.setCommand( MMK_CMD_SCHEDULE );
-                }
-                else
-                {
-                    keyBinding.setCommand( MMK_CMD_CLEAR );
-                }
-
-                xmlFree( cStr );
-            }
-            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"param1" ) )
-            {
-                xmlChar *cStr;
-                uint32_t value;
-
-                cStr = xmlNodeGetContent( nodePtr );
-
-                value = strtol( (const char *)cStr, NULL, 0 );
-                keyBinding.setParam1( value );
-
-                xmlFree( cStr );
-            }
-            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"start-delay" ) )
-            {
-                xmlChar *cStr;
-                uint32_t value;
-
-                cStr = xmlNodeGetContent( nodePtr );
-
-                value = strtol( (const char *)cStr, NULL, 0 );
-                keyBinding.setStartDelay( value );
-
-                xmlFree( cStr );
-            }
-        }
-
-    }
-}
-
-bool 
-CRLEDSequenceFile::parseMidiKeyMap( void *mapPtr )
-{
-    xmlNode *nodePtr = NULL;
-
-    printf( "parseMidiKeyMap\n" );
-
-    // Traverse the document to pull out the items of interest
-    for( nodePtr = ((xmlNode *)mapPtr)->children; nodePtr; nodePtr = nodePtr->next ) 
-    {
-        if( nodePtr->type == XML_ELEMENT_NODE ) 
-        {
-            printf( "node type: Element, name: %s\n", nodePtr->name );
-
-            if( xmlStrEqual( nodePtr->name, (xmlChar *)"key" ) )
-            {
-                CRLEDMidiKeyBinding keyBinding;
-       
-                parseMidiKey( nodePtr, keyBinding );
-
-                keyMap.setKeyBinding( keyBinding.getKeyCode(), keyBinding );
-            }
-            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"key-default" ) )
-            {
-                CRLEDMidiKeyBinding keyBinding;
-       
-                parseMidiKey( nodePtr, keyBinding );
-
-                keyMap.setDefaultKeyBinding( keyBinding );
-            }
-
-        }
-    }
-}
 #endif
 
 bool 
-CRLEDSequenceFile::load( std::string nodeid )
+CRLEDSequenceFile::parseSequence( void *seqPtr, CRLSeqNode &node )
+{
+    xmlNode  *nodePtr = NULL;
+    xmlChar  *kcStr;
+    uint32_t  index;
+
+    // Extract the keycode
+    kcStr = xmlGetProp( (xmlNode *)seqPtr, (xmlChar *)"index" );
+
+    if( kcStr == NULL )
+    {
+        return true;
+    }
+
+    index = strtol( (const char *)kcStr, NULL, 0 );
+    xmlFree( kcStr );
+
+    node.startSequence( index );
+
+#if 0
+        <clear/>
+        <region-change>
+          <action>on</action>
+          <range-list>
+            <range>
+              <start>0</start>
+              <end>20</end>
+            </range>
+          </range-list>
+        </region-change>
+#endif
+
+    // Traverse the document to pull out the items of interest
+    for( nodePtr = ((xmlNode *)seqPtr)->children; nodePtr; nodePtr = nodePtr->next ) 
+    {
+        if( nodePtr->type == XML_ELEMENT_NODE ) 
+        {
+            printf( "node type: Element, name: %s\n", nodePtr->name );
+
+            CRLSeqStep *stepObj = createStepForType( (const char*) nodePtr->name );
+
+            if( stepObj == NULL )
+            {
+                // Unrecognized step type
+                continue;
+            }
+
+            stepObj->initFromStepNode( nodePtr );
+
+            node.appendStepToSequence( index, stepObj );
+        }
+    }
+}
+
+bool 
+CRLEDSequenceFile::parseNode( void *nodePtr, CRLSeqNode &node )
+{
+    xmlNode  *tmpPtr = NULL;
+
+    // Traverse the document to pull out the items of interest
+    for( tmpPtr = ((xmlNode *)nodePtr)->children; tmpPtr; tmpPtr = tmpPtr->next ) 
+    {
+        if( tmpPtr->type == XML_ELEMENT_NODE ) 
+        {
+            printf( "node type: Element, name: %s\n", tmpPtr->name );
+
+            if( xmlStrEqual( tmpPtr->name, (xmlChar *)"sequence" ) )
+            {
+                parseSequence( tmpPtr, node );
+            }
+        }
+    }
+}
+
+bool 
+CRLEDSequenceFile::parseNodeList( void *listPtr, std::string nodeID )
+{
+    xmlNode *nodePtr = NULL;
+
+    printf( "parseNodeList\n" );
+
+    // Traverse the document to pull out the items of interest
+    for( nodePtr = ((xmlNode *)listPtr)->children; nodePtr; nodePtr = nodePtr->next ) 
+    {
+        if( nodePtr->type == XML_ELEMENT_NODE ) 
+        {
+            printf( "node type: Element, name: %s\n", nodePtr->name );
+
+            if( xmlStrEqual( nodePtr->name, (xmlChar *)"node" ) )
+            {
+                CRLSeqNode nodeObj;
+                xmlChar *tmpID;
+
+                // Grab the required id attribute
+                tmpID = xmlGetProp( nodePtr, (xmlChar *)"id" );
+
+                if( tmpID == NULL )
+                {
+                    continue;
+                }
+
+                // Set the type
+                nodeObj.setID( (const char*)tmpID );
+
+                xmlFree( tmpID );
+
+                if( nodeObj.getID() != nodeID )
+                {
+                    continue;
+                }
+
+                // Parse Node
+                parseNode( nodePtr, nodeObj );
+       
+                // Save the node object
+                nodeMap.insert( std::pair< std::string, CRLSeqNode>( nodeObj.getID(), nodeObj ) );
+            }
+        }
+    }
+}
+
+bool 
+CRLEDSequenceFile::load( std::string nodeID )
 {
     xmlDoc  *doc          = NULL;
     xmlNode *root_element = NULL;
@@ -261,20 +300,12 @@ CRLEDSequenceFile::load( std::string nodeid )
         {
             printf( "node type: Element, name: %s\n", cur_node->name );
 
-            if( xmlStrEqual( cur_node->name, (xmlChar *)"client-list" ) )
+            if( xmlStrEqual( cur_node->name, (xmlChar *)"node-list" ) )
             {
-//                parseClientList( cur_node );
+                parseNodeList( cur_node, nodeID );
             }
-            else if( xmlStrEqual( cur_node->name, (xmlChar *)"midi-key-map" ) )
-            {
-//                parseMidiKeyMap( cur_node );
-            } 
-
         }
-
     }
-
-    //print_element_names( root_element );
 
     // free the document 
     xmlFreeDoc( doc );
