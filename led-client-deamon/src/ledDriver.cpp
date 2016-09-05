@@ -253,12 +253,12 @@ PixelBufferAPA102::writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, 
 {
     PIXEL_ENTRY_APA102_T *p = (PIXEL_ENTRY_APA102_T *)( bufPtr + ( 4 + ( 4 * pixelIndex ) ) );
 
-    printf( "apa102 - writePixel: %d  %d\n", pixelIndex, getPixelCount() );
+    //printf( "apa102 - writePixel: %d  %d\n", pixelIndex, getPixelCount() );
 
     if( pixelIndex >= getPixelCount() )
         return;
 
-    printf( "apa102 - writePixel: 0x%x  0x%x\n", bufPtr, p );
+    //printf( "apa102 - writePixel: 0x%x  0x%x\n", bufPtr, p );
 
     p->global = 0xFF;
     p->blue   = blue;

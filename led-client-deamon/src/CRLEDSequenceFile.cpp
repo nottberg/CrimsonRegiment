@@ -782,8 +782,18 @@ CRLSSSparkle::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
     {
         int r = rand();
 
-        it->onTime      = 1 + r;
-        it->offTime     = 1 + r;
+        it->onTime = 500;
+        it->offTime = 500;
+        if( r < (RAND_MAX / 3) )
+        {
+            it->onTime += 250;
+            it->offTime += 250;
+        }
+        else if( r > (2*(RAND_MAX / 3) ) )
+        {
+            it->onTime -= 250;
+            it->offTime -= 250;
+        }
 
         r = rand();
 
