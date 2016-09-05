@@ -2,7 +2,8 @@
 
 #include "LEDSequencer.hpp"
 
-LEDSequenceStep::LEDSequenceStep()
+#if 0
+LEDSequenceStep::LEDSequenceStep( CRLSeqStep *configuration )
 {
 
 }
@@ -27,6 +28,7 @@ LEDSequenceStep::update( struct timeval *curTime, LEDDriver *leds )
 }
 
 LDStepWaitForStart::LDStepWaitForStart()
+: LEDSequenceStep( NULL )
 {
 
 }
@@ -65,7 +67,8 @@ LDStepWaitForStart::update( struct timeval *curTime, LEDDriver *leds )
     return LS_STEP_UPDATE_RESULT_CONT;
 }
 
-LDStepDelay::LDStepDelay()
+LDStepDelay::LDStepDelay( CRLSeqStep *configuration )
+: LEDSequenceStep( configuration )
 {
 
 }
@@ -87,7 +90,8 @@ LDStepDelay::update( struct timeval *curTime, LEDDriver *leds )
 
 }
 
-LDStepRegionChange::LDStepRegionChange()
+LDStepRegionChange::LDStepRegionChange( CRLSeqStep *configuration )
+: LEDSequenceStep( configuration )
 {
     switchOn    = false;
 
@@ -264,6 +268,7 @@ LEDSequence::updateStep( struct timeval *curTime, LEDDriver *leds )
     // The sequence is complete.
     return LS_SEQ_UPDATE_RESULT_DONE;
 }
+#endif
 
 LEDSequencer::LEDSequencer()
 :timer( 1, "LEDSequencerTimer" )
@@ -307,7 +312,7 @@ LEDSequencer::startSequence( uint32_t seqNumber, CRLEDCommandPacket *cmdPkt )
     struct timeval curTime;
 
     std::cout << "LEDSequencer::startSequence" << std::endl;
-
+#if 0
     if( seqNumber >= sequenceArray.size() )
         return;
 
@@ -322,6 +327,7 @@ LEDSequencer::startSequence( uint32_t seqNumber, CRLEDCommandPacket *cmdPkt )
 
     activeSeqNum = seqNumber;
     sequenceArray[ activeSeqNum ].startSequence( &curTime, leds, cmdPkt );
+#endif
 }
 
 void 
@@ -337,6 +343,7 @@ LEDSequencer::clearSequence()
     leds->clearAllPixels();
 }
 
+#if 0
 void 
 LEDSequencer::clearSequenceDefinition( uint32_t seqNumber )
 {
@@ -366,6 +373,7 @@ LEDSequencer::appendToSequenceDefinition( uint32_t seqNumber, LEDSequenceStep *s
     // Add the step to the existing definition.
     sequenceArray[ seqNumber ].appendDefinitionStep( step );
 }
+#endif
 
 void 
 LEDSequencer::eventAction( uint32_t EventID )
@@ -393,7 +401,7 @@ LEDSequencer::eventAction( uint32_t EventID )
     // it for next steps.
     if( activeSeqNum != LS_SEQ_NOT_ACTIVE )
     {
-        sequenceArray[ activeSeqNum ].updateStep( &CLOCK_TV, leds );
+//        sequenceArray[ activeSeqNum ].updateStep( &CLOCK_TV, leds );
     }
 }
 

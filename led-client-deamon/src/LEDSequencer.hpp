@@ -5,7 +5,9 @@
 #include "EventLoop.hpp"
 #include "ClientEvents.hpp"
 #include "CRLEDPacket.hpp"
+#include "CRLEDSequenceFile.hpp"
 
+#if 0
 // The type of operation for this step.
 typedef enum LEDStepTypeEnum
 {
@@ -22,10 +24,13 @@ typedef enum LEDStepUpdateResultEnum
 class LEDSequenceStep
 {
     private:
+        CRLSeqStep *cfgPtr;
 
     public:
-        LEDSequenceStep();
+        LEDSequenceStep( CRLSeqStep *configuration );
        ~LEDSequenceStep();
+
+        CRLSeqStep *getConfig();
 
         virtual LS_STEP_UPDATE_RESULT_T init( CRLEDCommandPacket *cmdPkt );
 
@@ -51,7 +56,7 @@ class LDStepDelay : public LEDSequenceStep
     private:
 
     public:
-        LDStepDelay();
+        LDStepDelay( CRLSeqStep *configuration );
        ~LDStepDelay();
 
         virtual LS_STEP_UPDATE_RESULT_T init( CRLEDCommandPacket *cmdPkt );
@@ -70,7 +75,7 @@ class LDStepRegionChange : public LEDSequenceStep
         PIXEL_ENTRY_T color;
 
     public:
-        LDStepRegionChange();
+        LDStepRegionChange( CRLSeqStep *configuration );
        ~LDStepRegionChange();
 
         void setOnOff( bool value );
@@ -115,6 +120,8 @@ class LEDSequence
         LS_SEQ_UPDATE_RESULT_T updateStep( struct timeval *curTime, LEDDriver *leds );
 };
 
+#endif
+
 #define LS_SEQ_NOT_ACTIVE  ((uint32_t) -1)
 
 class LEDSequencer : public EventNotify
@@ -125,7 +132,7 @@ class LEDSequencer : public EventNotify
 
         TimerEventSource  timer;
 
-        std::vector< LEDSequence > sequenceArray;
+//        std::vector< LEDSequence > sequenceArray;
 
         uint32_t activeSeqNum;
 
@@ -141,8 +148,8 @@ class LEDSequencer : public EventNotify
         void startSequence( uint32_t seqNumber, CRLEDCommandPacket *cmdPkt );
         void clearSequence();
 
-        void clearSequenceDefinition( uint32_t seqNumber );
-        void appendToSequenceDefinition( uint32_t seqNumber, LEDSequenceStep *step );
+        //void clearSequenceDefinition( uint32_t seqNumber );
+        //void appendToSequenceDefinition( uint32_t seqNumber, LEDSequenceStep *step );
 
         virtual void eventAction( uint32_t EventID );
 };

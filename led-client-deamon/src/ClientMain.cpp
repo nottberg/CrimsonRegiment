@@ -37,9 +37,10 @@ ClientMain::setup()
     eventSock.setup();
     loop.addSource( &eventSock );
 
+#if 0
     LDStepWaitForStart *startStep = new LDStepWaitForStart;
-    LDStepRegionChange *clearStep = new LDStepRegionChange; 
-    LDStepRegionChange *onStep    = new LDStepRegionChange; 
+    LDStepRegionChange *clearStep = new LDStepRegionChange(NULL); 
+    LDStepRegionChange *onStep    = new LDStepRegionChange(NULL); 
 
     onStep->setBounds( 0, 20 );
     onStep->setOnOff( true );
@@ -49,8 +50,8 @@ ClientMain::setup()
     sequencer.appendToSequenceDefinition( 0, onStep );
 
     LDStepWaitForStart *startStep1 = new LDStepWaitForStart;
-    LDStepRegionChange *clearStep1 = new LDStepRegionChange; 
-    LDStepRegionChange *onStep1    = new LDStepRegionChange; 
+    LDStepRegionChange *clearStep1 = new LDStepRegionChange(NULL); 
+    LDStepRegionChange *onStep1    = new LDStepRegionChange(NULL); 
 
     onStep1->setBounds( 0, 40 );
     onStep1->setOnOff( true );
@@ -60,8 +61,8 @@ ClientMain::setup()
     sequencer.appendToSequenceDefinition( 1, onStep1 );
 
     LDStepWaitForStart *startStep2 = new LDStepWaitForStart;
-    LDStepRegionChange *clearStep2 = new LDStepRegionChange; 
-    LDStepRegionChange *onStep2    = new LDStepRegionChange; 
+    LDStepRegionChange *clearStep2 = new LDStepRegionChange(NULL); 
+    LDStepRegionChange *onStep2    = new LDStepRegionChange(NULL); 
 
     onStep2->setBounds( 0, 60 );
     onStep2->setOnOff( true );
@@ -71,8 +72,8 @@ ClientMain::setup()
     sequencer.appendToSequenceDefinition( 2, onStep2 );
 
     LDStepWaitForStart *startStep3 = new LDStepWaitForStart;
-    LDStepRegionChange *clearStep3 = new LDStepRegionChange; 
-    LDStepRegionChange *onStep3    = new LDStepRegionChange; 
+    LDStepRegionChange *clearStep3 = new LDStepRegionChange(NULL); 
+    LDStepRegionChange *onStep3    = new LDStepRegionChange(NULL); 
 
     onStep3->setBounds( 0, 80 );
     onStep3->setOnOff( true );
@@ -80,6 +81,7 @@ ClientMain::setup()
     sequencer.appendToSequenceDefinition( 3, startStep3 );
     sequencer.appendToSequenceDefinition( 3, clearStep3 );
     sequencer.appendToSequenceDefinition( 3, onStep3 );
+#endif
 
 }
 

@@ -1,5 +1,7 @@
 #include <string.h>
 
+#include <iostream>
+
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
@@ -15,6 +17,429 @@ CRLSeqStep::~CRLSeqStep()
 
 }
 
+bool 
+CRLSeqStep::initFromStepNode( void *stepPtr )
+{
+
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSeqStep::initRT( CRLEDCommandPacket *cmdPkt )
+{
+    return LS_STEP_UPDATE_RESULT_DONE;
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSeqStep::updateRT( struct timeval *curTime, LEDDriver *leds )
+{
+    return LS_STEP_UPDATE_RESULT_DONE;
+}
+
+CRLSSWaitForStart::CRLSSWaitForStart()
+{
+
+}
+
+CRLSSWaitForStart::~CRLSSWaitForStart()
+{
+
+}
+
+bool 
+CRLSSWaitForStart::initFromStepNode( void *stepPtr )
+{
+
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSWaitForStart::initRT( CRLEDCommandPacket *cmdPkt )
+{
+    startTime.tv_sec  = cmdPkt->getTSSec();
+    startTime.tv_usec = cmdPkt->getTSUSec();
+
+    return LS_STEP_UPDATE_RESULT_DONE;
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSWaitForStart::updateRT( struct timeval *curTime, LEDDriver *leds )
+{
+    std::cout << "LDStepWaitForStart::update" << std::endl;
+    std::cout << curTime->tv_sec << ":" << startTime.tv_sec << std::endl;
+    std::cout << curTime->tv_usec << ":" << startTime.tv_usec << std::endl;
+
+    // If we are already behind by a full sec, then trigger
+    if( curTime->tv_sec > startTime.tv_sec )
+        return LS_STEP_UPDATE_RESULT_DONE;
+
+    // If the seconds is the same, check the usec instead.
+    if( curTime->tv_sec == startTime.tv_sec )
+    {    
+        if( curTime->tv_usec >= startTime.tv_usec )
+            return LS_STEP_UPDATE_RESULT_DONE;
+    }
+
+    // Otherwise keep waiting.
+    return LS_STEP_UPDATE_RESULT_CONT;
+}
+
+CRLSSClear::CRLSSClear()
+{
+
+}
+
+CRLSSClear::~CRLSSClear()
+{
+
+}
+
+bool 
+CRLSSClear::initFromStepNode( void *stepPtr )
+{
+
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSClear::initRT( CRLEDCommandPacket *cmdPkt )
+{
+    return LS_STEP_UPDATE_RESULT_DONE;
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSClear::updateRT( struct timeval *curTime, LEDDriver *leds )
+{
+    return LS_STEP_UPDATE_RESULT_DONE;
+}
+
+CRLSSRegionChange::CRLSSRegionChange()
+{
+    action = SSRC_ACTION_NOT_SET;
+}
+
+CRLSSRegionChange::~CRLSSRegionChange()
+{
+
+}
+
+#if 0
+        <clear/>
+        <region-change>
+          <action>on</action>
+          <range-list>
+            <range>
+              <start>0</start>
+              <end>20</end>
+            </range>
+          </range-list>
+        </region-change>
+      </sequence>
+#endif
+
+bool 
+CRLSSRegionChange::parseRangeEntry( void *rangeNode )
+{
+    SSRC_RANGE_T entry;
+    xmlNode *nodePtr = NULL;
+
+    // Initialize the entry
+    entry.startIndex = 0;
+    entry.endIndex   = 0;
+    entry.rsvd       = 0;
+    entry.red        = 255;
+    entry.green      = 255;
+    entry.blue       = 255;
+
+
+    // Traverse the document to pull out the items of interest
+    for( nodePtr = ((xmlNode *)rangeNode)->children; nodePtr; nodePtr = nodePtr->next ) 
+    {
+        if( nodePtr->type == XML_ELEMENT_NODE ) 
+        {
+            printf( "node type: Element, name: %s\n", nodePtr->name );
+
+            if( xmlStrEqual( nodePtr->name, (xmlChar *)"start" ) )
+            {
+                xmlChar *cStr;
+
+                cStr = xmlNodeGetContent( nodePtr );
+
+                entry.startIndex = strtol( (const char *)cStr, NULL, 0 );
+
+                xmlFree( cStr );
+            }
+            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"end" ) )
+            {
+                xmlChar *cStr;
+
+                cStr = xmlNodeGetContent( nodePtr );
+
+                entry.startIndex = strtol( (const char *)cStr, NULL, 0 );
+
+                xmlFree( cStr );
+            } 
+            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"color" ) )
+            {
+                xmlNode *colorPtr = NULL;
+
+                // Traverse the document to pull out the items of interest
+                for( colorPtr = ((xmlNode *)nodePtr)->children; colorPtr; colorPtr = colorPtr->next ) 
+                {
+                    if( colorPtr->type == XML_ELEMENT_NODE ) 
+                    {
+                        printf( "node type: Element, name: %s\n", colorPtr->name );
+
+                        if( xmlStrEqual( colorPtr->name, (xmlChar *)"red" ) )
+                        {
+                            xmlChar *cStr;
+
+                            cStr = xmlNodeGetContent( nodePtr );
+
+                            uint32_t value = strtol( (const char *)cStr, NULL, 0 );
+
+                            if( value > 255 )
+                                value = 255;
+
+                            entry.red = (uint8_t) value;
+
+                            xmlFree( cStr );     
+                        }
+                        else if( xmlStrEqual( colorPtr->name, (xmlChar *)"green" ) )
+                        {
+                            xmlChar *cStr;
+
+                            cStr = xmlNodeGetContent( nodePtr );
+
+                            uint32_t value = strtol( (const char *)cStr, NULL, 0 );
+
+                            if( value > 255 )
+                                value = 255;
+
+                            entry.green = (uint8_t) value;
+
+                            xmlFree( cStr );     
+                        }
+                        else if( xmlStrEqual( colorPtr->name, (xmlChar *)"blue" ) )
+                        {
+                            xmlChar *cStr;
+
+                            cStr = xmlNodeGetContent( nodePtr );
+
+                            uint32_t value = strtol( (const char *)cStr, NULL, 0 );
+
+                            if( value > 255 )
+                                value = 255;
+
+                            entry.blue = (uint8_t) value;
+
+                            xmlFree( cStr );     
+                        }
+                     }
+                }
+
+            }
+        }
+    }
+
+    rangeList.push_back( entry );
+}
+
+bool 
+CRLSSRegionChange::initFromStepNode( void *stepPtr )
+{
+    xmlNode *nodePtr = NULL;
+
+    // Traverse the document to pull out the items of interest
+    for( nodePtr = ((xmlNode *)stepPtr)->children; nodePtr; nodePtr = nodePtr->next ) 
+    {
+        if( nodePtr->type == XML_ELEMENT_NODE ) 
+        {
+            printf( "node type: Element, name: %s\n", nodePtr->name );
+
+            if( xmlStrEqual( nodePtr->name, (xmlChar *)"action" ) )
+            {
+                xmlChar *cStr;
+
+                cStr = xmlNodeGetContent( nodePtr );
+
+                if( xmlStrEqual( cStr, (xmlChar *)"on" ) )
+                {
+                    action = SSRC_ACTION_ON;
+                }
+                else if( xmlStrEqual( cStr, (xmlChar *)"off" ) )
+                {
+                    action = SSRC_ACTION_OFF;
+                }
+
+                xmlFree( cStr );
+            }
+            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"range-list" ) )
+            {
+                xmlNode *rangePtr = NULL;
+
+                // Traverse the document to pull out the items of interest
+                for( rangePtr = ((xmlNode *)nodePtr)->children; rangePtr; rangePtr = rangePtr->next ) 
+                {
+                    if( rangePtr->type == XML_ELEMENT_NODE ) 
+                    {
+                        printf( "node type: Element, name: %s\n", rangePtr->name );
+
+                        if( xmlStrEqual( rangePtr->name, (xmlChar *)"range" ) )
+                        {
+                            parseRangeEntry( rangePtr );
+                        }
+                     }
+                }
+            }
+        }
+    }
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSRegionChange::initRT( CRLEDCommandPacket *cmdPkt )
+{
+    return LS_STEP_UPDATE_RESULT_DONE;
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSRegionChange::updateRT( struct timeval *curTime, LEDDriver *leds )
+{
+    std::cout << "LDStepRegionChange::update" << std::endl;
+
+    for( std::vector< SSRC_RANGE_T >::iterator it = rangeList.begin(); it != rangeList.end(); it++ )
+    {
+        uint32_t lastIndex = it->endIndex;
+
+        if( lastIndex >= leds->getPixelCount() )
+            lastIndex = ( leds->getPixelCount() - 1 );
+
+        std::cout << it->startIndex << "  " << lastIndex << std::endl;
+
+        for( int x = it->startIndex; x < lastIndex; x++ )
+        { 
+            switch( action )
+            {
+                case SSRC_ACTION_ON:
+                    leds->setPixel( x, it->red, it->green, it->blue );
+                break;
+
+                case SSRC_ACTION_OFF:
+                    leds->clearPixel( x );
+                break;
+            }
+        }
+    }
+
+    return LS_STEP_UPDATE_RESULT_DONE;
+}
+
+CRLSSDwell::CRLSSDwell()
+{
+
+}
+
+CRLSSDwell::~CRLSSDwell()
+{
+
+}
+
+bool 
+CRLSSDwell::initFromStepNode( void *stepPtr )
+{
+
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSDwell::initRT( CRLEDCommandPacket *cmdPkt )
+{
+    return LS_STEP_UPDATE_RESULT_DONE;
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSDwell::updateRT( struct timeval *curTime, LEDDriver *leds )
+{
+    return LS_STEP_UPDATE_RESULT_DONE;
+}
+
+CRLSSGoto::CRLSSGoto()
+{
+
+}
+
+CRLSSGoto::~CRLSSGoto()
+{
+
+}
+
+bool 
+CRLSSGoto::initFromStepNode( void *stepPtr )
+{
+
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSGoto::initRT( CRLEDCommandPacket *cmdPkt )
+{
+    return LS_STEP_UPDATE_RESULT_DONE;
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSGoto::updateRT( struct timeval *curTime, LEDDriver *leds )
+{
+    return LS_STEP_UPDATE_RESULT_DONE;
+}
+
+CRLSSTransform::CRLSSTransform()
+{
+
+}
+
+CRLSSTransform::~CRLSSTransform()
+{
+
+}
+
+bool 
+CRLSSTransform::initFromStepNode( void *stepPtr )
+{
+
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSTransform::initRT( CRLEDCommandPacket *cmdPkt )
+{
+    return LS_STEP_UPDATE_RESULT_DONE;
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSTransform::updateRT( struct timeval *curTime, LEDDriver *leds )
+{
+    return LS_STEP_UPDATE_RESULT_DONE;
+}
+
+CRLSeqStep* 
+CRLStepFactory::allocateStepForType( std::string type )
+{
+    if( type == "wait-for-start" )
+        return new CRLSSWaitForStart;
+    else if( type == "clear" )
+        return new CRLSSClear;
+    else if( type == "region-change" )
+        return new CRLSSRegionChange;
+    else if( type == "dwell" )
+        return new CRLSSDwell;
+    else if( type == "goto" )
+        return new CRLSSGoto;
+    else if( type == "transform" )
+        return new CRLSSTransform;
+    
+    return new CRLSeqStep;
+}
+
+void 
+CRLStepFactory::freeStep( CRLSeqStep *stepPtr )
+{
+    delete stepPtr;
+}
+
 CRLSeqRecord::CRLSeqRecord()
 {
 //std::vector< CRLSeqStep > stepList;
@@ -25,10 +450,80 @@ CRLSeqRecord::~CRLSeqRecord()
 
 }
 
+void 
+CRLSeqRecord::initialize()
+{
+    for( std::vector< CRLSeqStep* >::iterator it = stepList.begin(); it != stepList.end(); it++ )
+    {
+        CRLStepFactory::freeStep( *it );
+    }
+
+    stepList.clear();
+}
+
+void 
+CRLSeqRecord::appendStep( CRLSeqStep *stepObj )
+{
+    stepList.push_back( stepObj );
+}
+
+LS_SEQ_UPDATE_RESULT_T 
+CRLSeqRecord::startSequence( struct timeval *curTime, LEDDriver *leds, CRLEDCommandPacket *cmdPkt )
+{
+    std::cout << "LEDSequence::startSequence" << std::endl;
+
+    // Back to the beginning
+    activeStep = 0;
+
+    // Initialize all of the steps
+    for( std::vector< CRLSeqStep* >::iterator it = stepList.begin(); it != stepList.end(); it++ )
+    {
+        (*it)->initRT( cmdPkt );
+    }
+
+    // Run an update step in case we are behind
+    return updateStep( curTime, leds );
+}
+
+LS_SEQ_UPDATE_RESULT_T 
+CRLSeqRecord::updateStep( struct timeval *curTime, LEDDriver *leds )
+{
+    // Roll through steps until we are told to wait.
+    while( (activeStep != LS_STEP_NOT_ACTIVE) && (activeStep < stepList.size() ) )
+    {
+        std::cout << "LEDSequence::updateStep" << std::endl;
+
+        // Execute the current step and see what it indicates to do.
+        switch( stepList[ activeStep ]->updateRT( curTime, leds ) )
+        {
+            // Done with the current step, move to the next one.
+            case LS_STEP_UPDATE_RESULT_DONE:
+            {
+                activeStep += 1;
+
+                std::cout << activeStep << "  " << stepList.size() << std::endl;
+
+                if( activeStep >= stepList.size() )
+                    activeStep = LS_STEP_NOT_ACTIVE;
+            }
+            break;
+
+            // Continue with the current step at next time boundary.
+            case LS_STEP_UPDATE_RESULT_CONT:
+                return LS_SEQ_UPDATE_RESULT_CONT;
+            break;
+        }
+    }
+
+    // The sequence is complete.
+    return LS_SEQ_UPDATE_RESULT_DONE;
+}
+
 CRLSeqNode::CRLSeqNode()
 {
 // std::string nodeID;
 // std::vector< CRLSeqRecord > seqList;
+    setMaximumSequenceIndex( 10 );
 }
 
 CRLSeqNode::~CRLSeqNode()
@@ -46,6 +541,37 @@ std::string
 CRLSeqNode::getID()
 {
     return nodeID;
+}
+
+void 
+CRLSeqNode::setMaximumSequenceIndex( uint32_t value )
+{
+    maxSeqIndx = value;
+    seqList.reserve( maxSeqIndx );
+}
+
+uint32_t 
+CRLSeqNode::getMaximumSequenceIndex()
+{
+    return maxSeqIndx;
+}
+
+void 
+CRLSeqNode::startSequence( uint32_t seqIndx )
+{
+    if( seqIndx >= maxSeqIndx )
+        return;
+
+    seqList[seqIndx].initialize();
+}
+
+void 
+CRLSeqNode::appendStepToSequence( uint32_t seqIndx, CRLSeqStep *stepObj )
+{
+    if( seqIndx >= maxSeqIndx )
+        return;
+
+    seqList[ seqIndx ].appendStep( stepObj );
 }
 
 CRLEDSequenceFile::CRLEDSequenceFile()
@@ -187,7 +713,7 @@ CRLEDSequenceFile::parseSequence( void *seqPtr, CRLSeqNode &node )
         {
             printf( "node type: Element, name: %s\n", nodePtr->name );
 
-            CRLSeqStep *stepObj = createStepForType( (const char*) nodePtr->name );
+            CRLSeqStep *stepObj = CRLStepFactory::allocateStepForType( (const char*) nodePtr->name );
 
             if( stepObj == NULL )
             {
@@ -239,24 +765,37 @@ CRLEDSequenceFile::parseNodeList( void *listPtr, std::string nodeID )
             if( xmlStrEqual( nodePtr->name, (xmlChar *)"node" ) )
             {
                 CRLSeqNode nodeObj;
-                xmlChar *tmpID;
+                xmlChar *tmpStr;
 
                 // Grab the required id attribute
-                tmpID = xmlGetProp( nodePtr, (xmlChar *)"id" );
+                tmpStr = xmlGetProp( nodePtr, (xmlChar *)"id" );
 
-                if( tmpID == NULL )
+                if( tmpStr == NULL )
                 {
                     continue;
                 }
 
                 // Set the type
-                nodeObj.setID( (const char*)tmpID );
+                nodeObj.setID( (const char*)tmpStr );
 
-                xmlFree( tmpID );
+                xmlFree( tmpStr );
 
                 if( nodeObj.getID() != nodeID )
                 {
                     continue;
+                }
+
+                // Check if the optional max-seqindx attribute has given
+                tmpStr = xmlGetProp( nodePtr, (xmlChar *)"max-seqindx" );
+
+                if( tmpStr != NULL )
+                {
+                    uint32_t maxIndx = strtol( (const char*)tmpStr, NULL, 0 );
+
+                    if( maxIndx > 0 && maxIndx <= 64 )
+                        nodeObj.setMaximumSequenceIndex( maxIndx );
+
+                    xmlFree( tmpStr );
                 }
 
                 // Parse Node
