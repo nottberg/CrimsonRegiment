@@ -487,6 +487,10 @@ CRLSSLinearFill::initRT( CRLEDCommandPacket *cmdPkt )
 LS_STEP_UPDATE_RESULT_T 
 CRLSSLinearFill::updateRT( struct timeval *curTime, LEDDriver *leds )
 {
+    std::cout << "CRLSSLinearFill::updateRT - " << curTime->tv_sec << ":" << nextTime.tv_sec << std::endl;
+    std::cout << "CRLSSLinearFill::updateRT - " << curTime->tv_usec << ":" << nextTime.tv_usec << std::endl;
+    std::cout << "CRLSSLinearFill::updateRT - " << curiter << "  " << nextIndx << std::endl;
+
     // Check if we have a time stamp to wait for
     if( curiter > 0 )
     {
