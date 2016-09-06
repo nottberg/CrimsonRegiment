@@ -182,6 +182,11 @@ CRLSSRegionChange::parseRangeEntry( void *rangeNode )
             {
                 xmlNode *colorPtr = NULL;
 
+                // Default to off when color is specified
+                entry.red   = 0;
+                entry.green = 0;
+                entry.blue  = 0;
+
                 // Traverse the document to pull out the items of interest
                 for( colorPtr = ((xmlNode *)nodePtr)->children; colorPtr; colorPtr = colorPtr->next ) 
                 {
@@ -353,6 +358,122 @@ CRLSSLinearFill::~CRLSSLinearFill()
 bool 
 CRLSSLinearFill::initFromStepNode( void *stepPtr )
 {
+    xmlNode *nodePtr = NULL;
+
+    // Traverse the document to pull out the items of interest
+    for( nodePtr = ((xmlNode *)stepPtr)->children; nodePtr; nodePtr = nodePtr->next ) 
+    {
+        if( nodePtr->type == XML_ELEMENT_NODE ) 
+        {
+            printf( "node type: Element, name: %s\n", nodePtr->name );
+
+            if( xmlStrEqual( nodePtr->name, (xmlChar *)"start" ) )
+            {
+                xmlChar *cStr;
+
+                cStr = xmlNodeGetContent( nodePtr );
+
+                startIndex = strtol( (const char *)cStr, NULL, 0 );
+
+                xmlFree( cStr );
+            }
+            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"increment" ) )
+            {
+                xmlChar *cStr;
+
+                cStr = xmlNodeGetContent( nodePtr );
+
+                increment = strtol( (const char *)cStr, NULL, 0 );
+
+                xmlFree( cStr );
+            }
+            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"interations" ) )
+            {
+                xmlChar *cStr;
+
+                cStr = xmlNodeGetContent( nodePtr );
+
+                iterations = strtol( (const char *)cStr, NULL, 0 );
+
+                xmlFree( cStr );
+            } 
+            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"delay" ) )
+            {
+                xmlChar *cStr;
+
+                cStr = xmlNodeGetContent( nodePtr );
+
+                delay = strtol( (const char *)cStr, NULL, 0 );
+
+                xmlFree( cStr );
+            } 
+            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"color" ) )
+            {
+                xmlNode *colorPtr = NULL;
+
+                // Default to off when color is specified
+                red   = 0;
+                green = 0;
+                blue  = 0;
+
+                // Traverse the document to pull out the items of interest
+                for( colorPtr = ((xmlNode *)nodePtr)->children; colorPtr; colorPtr = colorPtr->next ) 
+                {
+                    if( colorPtr->type == XML_ELEMENT_NODE ) 
+                    {
+                        printf( "node type: Element, name: %s\n", colorPtr->name );
+
+                        if( xmlStrEqual( colorPtr->name, (xmlChar *)"red" ) )
+                        {
+                            xmlChar *cStr;
+
+                            cStr = xmlNodeGetContent( colorPtr );
+
+                            uint32_t value = strtol( (const char *)cStr, NULL, 0 );
+
+                            if( value > 255 )
+                                value = 255;
+
+                            red = (uint8_t) value;
+
+                            xmlFree( cStr );     
+                        }
+                        else if( xmlStrEqual( colorPtr->name, (xmlChar *)"green" ) )
+                        {
+                            xmlChar *cStr;
+
+                            cStr = xmlNodeGetContent( colorPtr );
+
+                            uint32_t value = strtol( (const char *)cStr, NULL, 0 );
+
+                            if( value > 255 )
+                                value = 255;
+
+                            green = (uint8_t) value;
+
+                            xmlFree( cStr );     
+                        }
+                        else if( xmlStrEqual( colorPtr->name, (xmlChar *)"blue" ) )
+                        {
+                            xmlChar *cStr;
+
+                            cStr = xmlNodeGetContent( colorPtr );
+
+                            uint32_t value = strtol( (const char *)cStr, NULL, 0 );
+
+                            if( value > 255 )
+                                value = 255;
+
+                            blue = (uint8_t) value;
+
+                            xmlFree( cStr );     
+                        }
+                     }
+                }
+
+            }
+        }
+    }
 
 }
 
