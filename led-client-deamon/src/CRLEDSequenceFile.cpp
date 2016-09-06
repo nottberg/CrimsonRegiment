@@ -709,10 +709,10 @@ CRLSSSparklePixel::CRLSSSparklePixel()
 {
     state = SPARKLE_PIXEL_STATE_INIT;
 
-    onTime      = 1000;
-    offTime     = 1000;
-    onRampTime  = 20;
-    offRampTime = 20;
+    onTime      = 100;
+    offTime     = 800;
+    onRampTime  = 30;
+    offRampTime = 40;
 
     pvalue = 0xff;
 }
@@ -781,37 +781,51 @@ CRLSSSparkle::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
     for( std::vector< CRLSSSparklePixel >::iterator it = pixelList.begin(); it != pixelList.end(); it++ )
     {
         int r = rand();
-
+        double frac = ((double)r/(double)RAND_MAX);
         it->state = SPARKLE_PIXEL_STATE_INIT;
 
-        it->onTime = 500;
-        it->offTime = 500;
-        if( r < (RAND_MAX / 3) )
+//        it->onTime = 500;
+//        it->offTime = 500;
+        if( r > (RAND_MAX/2) )
         {
-            it->onTime += 250;
-            it->offTime += 250;
+            it->onTime += ((double)100 * frac);
         }
-        else if( r > (2*(RAND_MAX / 3) ) )
+        else
         {
-            it->onTime -= 250;
-            it->offTime -= 250;
+            it->onTime -= ((double)100 * frac);
+        }
+
+        if( r > (RAND_MAX/2) )
+        {
+            it->offTime += ((double)200 * frac);
+        }
+        else
+        {
+            it->offTime -= ((double)200 * frac);
         }
 
         r = rand();
 
-        it->onRampTime = 20;
-        if( r < (RAND_MAX / 3) )
-            it->onRampTime += 10;
-        else if( r > (2*(RAND_MAX / 3) ) )
-            it->onRampTime -= 10;
+        if( r > (RAND_MAX/2) )
+        {
+            it->onRampTime += ((double)20 * frac);
+        }
+        else
+        {
+            it->onRampTime -= ((double)20 * frac);
+        }
 
         r = rand();
 
-        it->offRampTime = 20;
-        if( r < (RAND_MAX / 3) )
-            it->offRampTime += 10;
-        else if( r > (2*(RAND_MAX / 3) ) )
-            it->offRampTime -= 10;
+        if( r > (RAND_MAX/2) )
+        {
+            it->offRampTime += ((double)20 * frac);
+        }
+        else
+        {
+            it->offRampTime -= ((double)20 * frac);
+        }
+
 
         printf( "sparkle: %d, %d, %d, %d\n", it->onTime, it->offTime, it->onRampTime, it->offRampTime );
     }
@@ -883,7 +897,7 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
                 }
 
                 // Dim by a quarter
-                it->pvalue -= 32;
+                it->pvalue -= 51;
 
                 // Turn on the next led
                 leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
@@ -894,6 +908,7 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
             break;
 
             case SPARKLE_PIXEL_STATE_OFF:
+
                 // Check if we still need to wait
                 if( checkTime( curTime, &(it->nextTime) ) )
                 {
@@ -901,7 +916,7 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
                 }
 
                 // Brighten by a quarter
-                it->pvalue += 32;
+                it->pvalue += 51;
 
                 // Turn on the next led
                 leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
@@ -918,7 +933,7 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
                 }
 
                 // Dim by a quarter
-                it->pvalue -= 32;
+                it->pvalue += 51;
 
                 // Turn on the next led
                 leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
@@ -943,7 +958,10 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
                 }
 
                 // Dim by a quarter
-                it->pvalue -= 32;
+                it->pvalue -= 51;
+
+                if( pixelIndx == 0 )
+                    std::cout << "Pixel 0: " << (uint32_t)it->pvalue << std::endl;
 
                 // Turn on the next led
                 leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
@@ -1047,7 +1065,7 @@ CRLSeqRecord::updateRT( struct timeval *curTime, LEDDriver *leds )
     // Roll through steps until we are told to wait.
     while( (activeStep != LS_STEP_NOT_ACTIVE) && (activeStep < stepList.size() ) )
     {
-        std::cout << "LEDSequence::updateStep" << std::endl;
+        //std::cout << "LEDSequence::updateStep" << std::endl;
 
         // Execute the current step and see what it indicates to do.
         switch( stepList[ activeStep ]->updateRT( curTime, leds ) )
