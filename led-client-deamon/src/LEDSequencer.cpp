@@ -274,9 +274,7 @@ LEDSequencer::LEDSequencer()
 :timer( 1, "LEDSequencerTimer" )
 {
     leds         = NULL;
-    activeSeqNum = LS_SEQ_NOT_ACTIVE;
-
-    //std::vector< LEDSequence > sequenceArray;
+    cfgNode      = NULL;
 }
 
 LEDSequencer::~LEDSequencer()
@@ -288,6 +286,12 @@ void
 LEDSequencer::setDriver( LEDDriver *driver )
 {
     leds = driver;
+}
+
+void 
+LEDSequencer::setNodeConfig( CRLSeqNode *value )
+{
+    cfgNode = value;
 }
 
 void 
@@ -312,11 +316,11 @@ LEDSequencer::startSequence( uint32_t seqNumber, CRLEDCommandPacket *cmdPkt )
     struct timeval curTime;
 
     std::cout << "LEDSequencer::startSequence" << std::endl;
-#if 0
-    if( seqNumber >= sequenceArray.size() )
-        return;
 
     if( leds == NULL )
+        return;
+
+    if( cfgNode == NULL )
         return;
 
     // Get a timestamp for the sequencer to key off of if necessary
@@ -325,9 +329,7 @@ LEDSequencer::startSequence( uint32_t seqNumber, CRLEDCommandPacket *cmdPkt )
         perror("gettimeofday()");
     }
 
-    activeSeqNum = seqNumber;
-    sequenceArray[ activeSeqNum ].startSequence( &curTime, leds, cmdPkt );
-#endif
+    cfgNode->activateSequence( seqNumber, cmdPkt, &curTime, leds );
 }
 
 void 
@@ -335,45 +337,16 @@ LEDSequencer::clearSequence()
 {
     std::cout << "LEDSequencer::clearSequence" << std::endl;
 
-    activeSeqNum = LS_SEQ_NOT_ACTIVE;
-
-    if( leds == NULL )
-        return;
-
-    leds->clearAllPixels();
-}
-
-#if 0
-void 
-LEDSequencer::clearSequenceDefinition( uint32_t seqNumber )
-{
-    // Check if sequence exists, if not; nothing to do here
-    if( seqNumber >= sequenceArray.size() )
-        return;
-
-    // Tell the sequence to clear its definition
-    sequenceArray[ seqNumber ].clearDefinition();
-}
-
-void 
-LEDSequencer::appendToSequenceDefinition( uint32_t seqNumber, LEDSequenceStep *step )
-{
-    // Do a sanity check to not allow a run-away number of sequences
-    if( seqNumber >= 1000 )
-        return;
-
-    // Check if sequence exists, if not; add them until it does.
-    while( seqNumber >= sequenceArray.size() )
+    if( cfgNode != NULL )
     {
-        LEDSequence seqObj;
-       
-        sequenceArray.push_back( seqObj );
+        cfgNode->clearActiveSequence();
     }
 
-    // Add the step to the existing definition.
-    sequenceArray[ seqNumber ].appendDefinitionStep( step );
+    if( leds != NULL )
+    {
+        leds->clearAllPixels();
+    }
 }
-#endif
 
 void 
 LEDSequencer::eventAction( uint32_t EventID )
@@ -390,6 +363,9 @@ LEDSequencer::eventAction( uint32_t EventID )
     // as possible.
     leds->processUpdates();
 
+    if( cfgNode == NULL )
+        return;
+
     // Get a timestamp for the sequencer to key off of if necessary
     if( gettimeofday( &CLOCK_TV, NULL ) ) 
     {
@@ -397,12 +373,8 @@ LEDSequencer::eventAction( uint32_t EventID )
         event_loopbreak();
     }
 
-    // If there is an active sequence then call 
-    // it for next steps.
-    if( activeSeqNum != LS_SEQ_NOT_ACTIVE )
-    {
-//        sequenceArray[ activeSeqNum ].updateStep( &CLOCK_TV, leds );
-    }
+    // Perform sequence updates
+    cfgNode->updateSequence( &CLOCK_TV, leds );
 }
 
 

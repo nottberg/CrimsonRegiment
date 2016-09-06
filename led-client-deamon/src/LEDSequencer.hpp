@@ -122,25 +122,26 @@ class LEDSequence
 
 #endif
 
-#define LS_SEQ_NOT_ACTIVE  ((uint32_t) -1)
-
 class LEDSequencer : public EventNotify
 {
     private:
 
         LEDDriver         *leds;
 
-        TimerEventSource  timer;
+        TimerEventSource   timer;
+
+        CRLSeqNode        *cfgNode;
 
 //        std::vector< LEDSequence > sequenceArray;
 
-        uint32_t activeSeqNum;
+//        uint32_t activeSeqNum;
 
     public:
         LEDSequencer();
        ~LEDSequencer();
 
         void setDriver( LEDDriver *driver );
+        void setNodeConfig( CRLSeqNode *value );
 
         void start( EventLoop &loop );
         void stop();

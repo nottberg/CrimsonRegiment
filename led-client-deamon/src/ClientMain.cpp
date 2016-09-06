@@ -29,6 +29,7 @@ ClientMain::setup()
 
     // Setup the sequencer
     sequencer.setDriver( &driver );
+    sequencer.setNodeConfig( seqConfig.getNodeConfig( config.getID() ) );
 
     driver.start( loop );
     sequencer.start( loop );

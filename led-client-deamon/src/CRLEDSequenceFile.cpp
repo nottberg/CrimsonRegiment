@@ -107,6 +107,8 @@ CRLSSClear::initRT( CRLEDCommandPacket *cmdPkt )
 LS_STEP_UPDATE_RESULT_T 
 CRLSSClear::updateRT( struct timeval *curTime, LEDDriver *leds )
 {
+    leds->clearAllPixels();
+ 
     return LS_STEP_UPDATE_RESULT_DONE;
 }
 
@@ -468,9 +470,9 @@ CRLSeqRecord::appendStep( CRLSeqStep *stepObj )
 }
 
 LS_SEQ_UPDATE_RESULT_T 
-CRLSeqRecord::startSequence( struct timeval *curTime, LEDDriver *leds, CRLEDCommandPacket *cmdPkt )
+CRLSeqRecord::activateRT( CRLEDCommandPacket *cmdPkt, struct timeval *curTime, LEDDriver *leds )
 {
-    std::cout << "LEDSequence::startSequence" << std::endl;
+    std::cout << "CRLSeqRecord::activateRT" << std::endl;
 
     // Back to the beginning
     activeStep = 0;
@@ -482,11 +484,11 @@ CRLSeqRecord::startSequence( struct timeval *curTime, LEDDriver *leds, CRLEDComm
     }
 
     // Run an update step in case we are behind
-    return updateStep( curTime, leds );
+    return updateRT( curTime, leds );
 }
 
 LS_SEQ_UPDATE_RESULT_T 
-CRLSeqRecord::updateStep( struct timeval *curTime, LEDDriver *leds )
+CRLSeqRecord::updateRT( struct timeval *curTime, LEDDriver *leds )
 {
     // Roll through steps until we are told to wait.
     while( (activeStep != LS_STEP_NOT_ACTIVE) && (activeStep < stepList.size() ) )
@@ -521,8 +523,8 @@ CRLSeqRecord::updateStep( struct timeval *curTime, LEDDriver *leds )
 
 CRLSeqNode::CRLSeqNode()
 {
-// std::string nodeID;
-// std::vector< CRLSeqRecord > seqList;
+    activeSeqIndx = LS_SEQ_NOT_ACTIVE;
+
     setMaximumSequenceIndex( 10 );
 }
 
@@ -557,7 +559,7 @@ CRLSeqNode::getMaximumSequenceIndex()
 }
 
 void 
-CRLSeqNode::startSequence( uint32_t seqIndx )
+CRLSeqNode::newSequence( uint32_t seqIndx )
 {
     if( seqIndx >= maxSeqIndx )
         return;
@@ -572,6 +574,35 @@ CRLSeqNode::appendStepToSequence( uint32_t seqIndx, CRLSeqStep *stepObj )
         return;
 
     seqList[ seqIndx ].appendStep( stepObj );
+}
+
+void 
+CRLSeqNode::activateSequence( uint32_t seqIndx, CRLEDCommandPacket *cmdPkt, struct timeval *curTime, LEDDriver *leds )
+{
+    if( seqIndx >= maxSeqIndx )
+        return;
+
+    activeSeqIndx = seqIndx;
+
+    seqList[ activeSeqIndx ].activateRT( cmdPkt, curTime, leds );
+}
+
+void 
+CRLSeqNode::clearActiveSequence()
+{
+    activeSeqIndx = LS_SEQ_NOT_ACTIVE;
+}
+
+void 
+CRLSeqNode::updateSequence( struct timeval *curTime, LEDDriver *leds )
+{
+    // If no active sequence then nothing to do.
+    if( activeSeqIndx == LS_SEQ_NOT_ACTIVE )
+        return;
+
+    // If there is an active sequence then call 
+    // it for next steps.
+    seqList[ activeSeqIndx ].updateRT( curTime, leds );
 }
 
 CRLEDSequenceFile::CRLEDSequenceFile()
@@ -691,7 +722,7 @@ CRLEDSequenceFile::parseSequence( void *seqPtr, CRLSeqNode &node )
     index = strtol( (const char *)kcStr, NULL, 0 );
     xmlFree( kcStr );
 
-    node.startSequence( index );
+    node.newSequence( index );
 
 #if 0
         <clear/>
@@ -854,6 +885,17 @@ CRLEDSequenceFile::load( std::string nodeID )
     xmlCleanupParser();
 
     return false;
+}
+
+CRLSeqNode*
+CRLEDSequenceFile::getNodeConfig( std::string id )
+{
+    std::map< std::string, CRLSeqNode>::iterator it = nodeMap.find( id );
+
+    if( it == nodeMap.end() )
+        return NULL;
+
+    return &(it->second);
 }
 
 #if 0

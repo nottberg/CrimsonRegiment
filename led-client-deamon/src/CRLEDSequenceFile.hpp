@@ -192,10 +192,12 @@ class CRLSeqRecord
 
         void appendStep( CRLSeqStep *stepObj );
 
-        LS_SEQ_UPDATE_RESULT_T startSequence( struct timeval *curTime, LEDDriver *leds, CRLEDCommandPacket *cmdPkt );
+        LS_SEQ_UPDATE_RESULT_T activateRT( CRLEDCommandPacket *cmdPkt, struct timeval *curTime, LEDDriver *leds );
 
-        LS_SEQ_UPDATE_RESULT_T updateStep( struct timeval *curTime, LEDDriver *leds );
+        LS_SEQ_UPDATE_RESULT_T updateRT( struct timeval *curTime, LEDDriver *leds );
 };
+
+#define LS_SEQ_NOT_ACTIVE  ((uint32_t) -1)
 
 class CRLSeqNode
 {
@@ -204,6 +206,8 @@ class CRLSeqNode
 
         uint32_t maxSeqIndx;
         std::vector< CRLSeqRecord > seqList;
+
+        uint32_t activeSeqIndx;
 
     public:
         CRLSeqNode();
@@ -215,8 +219,12 @@ class CRLSeqNode
         void setMaximumSequenceIndex( uint32_t value );
         uint32_t getMaximumSequenceIndex();
 
-        void startSequence( uint32_t seqIndx );
+        void newSequence( uint32_t seqIndx );
         void appendStepToSequence( uint32_t seqIndx, CRLSeqStep *stepObj );
+
+        void activateSequence( uint32_t seqIndx, CRLEDCommandPacket *cmdPkt, struct timeval *curTime, LEDDriver *leds );
+        void clearActiveSequence();
+        void updateSequence( struct timeval *curTime, LEDDriver *leds );
 };
 
 class CRLEDSequenceFile
@@ -235,6 +243,8 @@ class CRLEDSequenceFile
         void setSequenceFilePath();
 
         bool load( std::string nodeID );
+
+        CRLSeqNode *getNodeConfig( std::string id );
 
 };
 
