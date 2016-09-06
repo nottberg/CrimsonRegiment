@@ -108,6 +108,37 @@ class CRLSSRegionChange : public CRLSeqStep
 
 };
 
+// Do a timed fill of a region
+class CRLSSLinearFill : public CRLSeqStep
+{
+    private:
+        uint8_t red;
+        uint8_t green;
+        uint8_t blue;
+
+        uint32_t startIndex;
+        int32_t  increment;
+        uint32_t iterations;
+        uint32_t delay;
+
+        uint32_t curiter;
+        uint32_t nextIndx;
+        struct timeval nextTime;
+
+//        bool parseRangeEntry( void *rangeNode );
+
+    public:
+        CRLSSLinearFill();
+       ~CRLSSLinearFill();
+
+        virtual bool initFromStepNode( void *stepPtr ); 
+
+        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt );
+
+        virtual LS_STEP_UPDATE_RESULT_T updateRT( struct timeval *curTime, LEDDriver *leds );
+
+};
+
 // Dwell until a point in time
 class CRLSSDwell : public CRLSeqStep
 {

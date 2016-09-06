@@ -333,6 +333,86 @@ CRLSSRegionChange::updateRT( struct timeval *curTime, LEDDriver *leds )
     return LS_STEP_UPDATE_RESULT_DONE;
 }
 
+CRLSSLinearFill::CRLSSLinearFill()
+{
+    red   = 255;
+    green = 255;
+    blue  = 255;
+
+    startIndex = 0;
+    increment  = 1;
+    iterations = 40;
+    delay      = 100;
+}
+
+CRLSSLinearFill::~CRLSSLinearFill()
+{
+
+}
+
+bool 
+CRLSSLinearFill::initFromStepNode( void *stepPtr )
+{
+
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSLinearFill::initRT( CRLEDCommandPacket *cmdPkt )
+{
+    curiter  = 0;
+    nextIndx = startIndex;
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSLinearFill::updateRT( struct timeval *curTime, LEDDriver *leds )
+{
+    // Check if we have a time stamp to wait for
+    if( curiter > 0 )
+    {
+        // If we are already behind by a full sec, then trigger
+        if( curTime->tv_sec < nextTime.tv_sec )
+            return LS_STEP_UPDATE_RESULT_CONT;
+
+        // If the seconds is the same, check the usec instead.
+        if( curTime->tv_sec == nextTime.tv_sec )
+        {    
+            if( curTime->tv_usec < nextTime.tv_usec )
+                return LS_STEP_UPDATE_RESULT_CONT;
+        }
+
+        // Otherwise fall through and take the next step
+    }
+    else
+    {
+        // Grab the initial time stamp to base things on.
+        nextTime.tv_sec  = curTime->tv_sec;
+        nextTime.tv_usec = curTime->tv_usec;
+    }
+
+    // Turn on the next led
+    leds->setPixel( nextIndx, red, green, blue );
+
+    // Move to the next iteration
+    curiter += 1;
+
+    // Check if we are done with this step.
+    if( curiter >= iterations )
+        return LS_STEP_UPDATE_RESULT_DONE;
+
+    // Calculate the next update parameters
+    nextIndx += increment;
+
+    nextTime.tv_usec += ( delay * 1000 );
+    while( nextTime.tv_usec >= 1000000 )
+    {
+        nextTime.tv_sec  += 1;
+        nextTime.tv_usec -= 1000000; 
+    }  
+
+    // Still in this step wait for next update
+    return LS_STEP_UPDATE_RESULT_CONT;
+}
+
 CRLSSDwell::CRLSSDwell()
 {
 
@@ -432,6 +512,8 @@ CRLStepFactory::allocateStepForType( std::string type )
         return new CRLSSGoto;
     else if( type == "transform" )
         return new CRLSSTransform;
+    else if( type == "linear-fill" )
+        return new CRLSSLinearFill;
     
     return new CRLSeqStep;
 }
