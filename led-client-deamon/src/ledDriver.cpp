@@ -12,34 +12,10 @@
 
 #include "ledDriver.hpp"
 
-PixelBuffer::PixelBuffer( uint16_t ledCount )
+PixelBuffer::PixelBuffer()
 {
-    // Remember the number of leds in the string
-    ledCnt = ledCount;
-
-    // Allocate a buffer to hold the led info.
-    bufLength = ( ledCnt + 3 ) * sizeof( PIXEL_ENTRY_T );
-    bufPtr = (uint8_t *) malloc( bufLength );
-  
-    if( bufPtr == NULL ) 
-    {
-        bufLength = 0;
-        return;
-    }
-
-    // Clear the buffer to zeroes.
-    bzero( bufPtr, bufLength );
-
-    // Initialize all of the pixels to black
-    for( uint32_t i = 0; i < ledCount; i++ )
-    {
-        writePixel( i, 0x00, 0x00, 0x00 );
-    }
-
-    // Start up with no gamma correction
+    ledCnt = 0;
     gammaLookupInitialized = false;
-
-    return;
 }
 
 PixelBuffer::~PixelBuffer()
@@ -50,6 +26,17 @@ PixelBuffer::~PixelBuffer()
     }
 }
 
+void
+PixelBuffer::initialize( uint16_t ledCount )
+{
+    // Remember the number of leds in the string
+    ledCnt = ledCount;
+
+    // Start up with no gamma correction
+    gammaLookupInitialized = false;
+}
+
+#if 0
 void 
 PixelBuffer::writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue ) 
 {
@@ -78,6 +65,7 @@ PixelBuffer::writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, u
     p->red   = redGammaLookup[ red ];
     // printf ("index : %i %i %i %i\n",p, p->red  , p->green, p->blue);
 }
+#endif
 
 void
 PixelBuffer::setGammaCorrection( double red, double green, double blue )
@@ -134,19 +122,186 @@ PixelBuffer::getUpdateBuffer( uint8_t **buf, size_t &length )
     length = bufLength;
 }
 
-LEDDriver::LEDDriver( std::string spidev, uint16_t ledCount )
-: pixelData( ledCount ) //, updateEvent( 1, "ledDriverUpdateEvent" )
+PixelBufferLPD8806::PixelBufferLPD8806()
 {
-    spiPath = spidev;
-    spifd   = (-1);
-    //ledCnt = ledCount;
 
+}
+
+PixelBufferLPD8806::~PixelBufferLPD8806()
+{
+
+}
+
+void
+PixelBufferLPD8806::initialize( uint16_t ledCount )
+{
+    // Remember the number of leds in the string
+    PixelBuffer::initialize( ledCnt );
+
+    // Allocate a buffer to hold the led info.
+    bufLength = ( ledCnt + 3 ) * sizeof( PIXEL_ENTRY_LPD8806_T );
+    bufPtr = (uint8_t *) malloc( bufLength );
+  
+    if( bufPtr == NULL ) 
+    {
+        bufLength = 0;
+        return;
+    }
+
+    // Clear the buffer to zeroes.
+    bzero( bufPtr, bufLength );
+
+    // Initialize all of the pixels to black
+    for( uint32_t i = 0; i < ledCount; i++ )
+    {
+        writePixel( i, 0x00, 0x00, 0x00 );
+    }
+}
+
+void 
+PixelBufferLPD8806::writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue ) 
+{
+    PIXEL_ENTRY_LPD8806_T *p = (PIXEL_ENTRY_LPD8806_T *)( bufPtr + ( ( pixelIndex + 3 ) * sizeof( PIXEL_ENTRY_LPD8806_T )  ) );
+
+    if( pixelIndex >= ledCnt )
+        return;
+
+    p->blue  = 0x80 | ( blue & 0x7F );
+    p->green = 0x80 | ( green & 0x7F );
+    p->red   = 0x80 | ( red & 0x7F );
+
+//    printf ("index : %i 0x%x %x %x %x\n", pixelIndex, p, p->red  , p->green, p->blue);
+}
+
+void 
+PixelBufferLPD8806::writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue ) 
+{
+    PIXEL_ENTRY_LPD8806_T *p = (PIXEL_ENTRY_LPD8806_T *)( bufPtr + ( ( pixelIndex + 3 ) * sizeof( PIXEL_ENTRY_LPD8806_T )  ) );
+
+    if( pixelIndex >= ledCnt )
+        return;
+
+    p->blue  = blueGammaLookup[ blue ];
+    p->green = greenGammaLookup[ green ];
+    p->red   = redGammaLookup[ red ];
+    // printf ("index : %i %i %i %i\n",p, p->red  , p->green, p->blue);
+}
+
+
+PixelBufferAPA102::PixelBufferAPA102()
+{
+
+}
+
+PixelBufferAPA102::~PixelBufferAPA102()
+{
+
+}
+
+void
+PixelBufferAPA102::initialize( uint16_t ledCount )
+{
+    // Remember the number of leds in the string
+    PixelBuffer::initialize( ledCnt );
+
+    // For APA-102 we need one 32-bit start word,
+    // followed by 32-bits per pixel,
+    // followed by at least (ledCnt/2) bits of 1s to
+    // generate the forwarding clocks to end of strip.
+    bufLength  = 4;
+    bufLength += (4 * ledCnt);
+
+    uint32_t trailCnt = (( ledCnt / 2 ) / 8 ) + 1; // Add a 1 byte pad to round up.
+    bufLength += trailCnt; 
+
+    bufPtr = (uint8_t *) malloc( bufLength );
+
+    if( bufPtr == NULL ) 
+    {
+        bufLength = 0;
+        return;
+    }
+
+    // Clear the buffer to zeroes.
+    bzero( bufPtr, bufLength );
+
+    // Write the ones at the end
+    uint8_t *trailPtr = &bufPtr[ 4+(4*ledCnt) ]; 
+    for( uint32_t i = 0; i < trailCnt; i++ )
+    {
+        *trailPtr = 0xFF;
+        trailPtr++;
+    }
+
+    // Initialize all of the pixels to black
+    for( uint32_t i = 0; i < ledCount; i++ )
+    {
+        writePixel( i, 0x00, 0x00, 0x00 );
+    }
+}
+
+void 
+PixelBufferAPA102::writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue ) 
+{
+    PIXEL_ENTRY_APA102_T *p = (PIXEL_ENTRY_APA102_T *)( bufPtr + ( 4 + ( 4 * pixelIndex ) ) );
+
+    if( pixelIndex >= ledCnt )
+        return;
+
+    p->global = 0xFF;
+    p->blue   = blue;
+    p->green  = green;
+    p->red    = red;
+
+//    printf ("index : %i 0x%x %x %x %x\n", pixelIndex, p, p->red  , p->green, p->blue);
+}
+
+void 
+PixelBufferAPA102::writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue ) 
+{
+    PIXEL_ENTRY_APA102_T *p = (PIXEL_ENTRY_APA102_T *)( bufPtr + ( 4 + ( 4 * pixelIndex ) ) );
+
+    if( pixelIndex >= ledCnt )
+        return;
+
+    p->global = 0xFF;
+    p->blue   = blueGammaLookup[ blue ];
+    p->green  = greenGammaLookup[ green ];
+    p->red    = redGammaLookup[ red ];
+
+//    printf ("index : %i 0x%x %x %x %x\n", pixelIndex, p, p->red  , p->green, p->blue);
+}
+
+
+
+LEDDriver::LEDDriver()
+{
+    spifd   = (-1);
+    pixelData = NULL;
     pendingUpdate = false;
 }
 
 LEDDriver::~LEDDriver()
 {
 
+}
+
+void
+LEDDriver::initialize( LD_PROTOCOL_T protocol, std::string spidev, uint16_t ledCount )
+{
+    spiPath = spidev;
+    spifd   = (-1);
+
+    if( protocol == LD_PROTOCOL_LPD8806 )
+        pixelData = new PixelBufferLPD8806;
+    else if( protocol == LD_PROTOCOL_APA102 )
+        pixelData = new PixelBufferAPA102;
+    else
+        return;
+
+    pixelData->initialize( ledCount );
+
+    pendingUpdate = false;
 }
 
 bool 
@@ -207,13 +362,13 @@ LEDDriver::stop()
 void 
 LEDDriver::setGammaCorrection( double red, double green, double blue )
 {
-    pixelData.setGammaCorrection( red, green, blue );
+    pixelData->setGammaCorrection( red, green, blue );
 }
 
 uint32_t 
 LEDDriver::getPixelCount()
 {
-    return pixelData.getPixelCount();
+    return pixelData->getPixelCount();
 }
 
 void 
@@ -221,7 +376,7 @@ LEDDriver::clearAllPixels()
 {
     std::cout << "LEDDriver::clearAllPixels" << std::endl;
 
-    pixelData.clearAllPixels();
+    pixelData->clearAllPixels();
 
     signalUpdate();
 }
@@ -229,7 +384,7 @@ LEDDriver::clearAllPixels()
 void 
 LEDDriver::clearPixel( uint16_t pixelIndex )
 {
-    pixelData.clearPixel( pixelIndex );
+    pixelData->clearPixel( pixelIndex );
 
     signalUpdate();
 }
@@ -237,7 +392,7 @@ LEDDriver::clearPixel( uint16_t pixelIndex )
 void 
 LEDDriver::setPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue )
 {
-    pixelData.setPixel( pixelIndex, red, green, blue );
+    pixelData->setPixel( pixelIndex, red, green, blue );
 
     signalUpdate();
 }
@@ -261,7 +416,7 @@ LEDDriver::processUpdates()
     //std::cout << "processUpdates: 1" << std::endl;
 
     // Get the pixel data buffer to send
-    pixelData.getUpdateBuffer( &buf, attempt );
+    pixelData->getUpdateBuffer( &buf, attempt );
 
     //std::cout << "processUpdates: 2" << std::endl;
 

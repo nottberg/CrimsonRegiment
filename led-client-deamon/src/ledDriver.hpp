@@ -7,20 +7,17 @@
 
 #include "ClientEvents.hpp"
 
-// Represent the data for a single pixel 
-typedef struct pixelEntryStruct 
+typedef enum LEDDriverProtocolTypeEnum
 {
-    //uint8_t flag;
-  
-    uint8_t blue;
-    uint8_t red;
-    uint8_t green;
-} PIXEL_ENTRY_T;
+    LD_PROTOCOL_NOT_SET,
+    LD_PROTOCOL_LPD8806,
+    LD_PROTOCOL_APA102
+}LD_PROTOCOL_T;
 
 
 class PixelBuffer
 {
-    private:
+    protected:
         int      ledCnt;
 
         size_t   bufLength;
@@ -32,12 +29,14 @@ class PixelBuffer
         uint8_t  greenGammaLookup[256];
         uint8_t  blueGammaLookup[256];
 
-        void writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
-        void writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
+        virtual void writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue ) = 0;
+        virtual void writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue ) = 0;
 
     public:
-        PixelBuffer( uint16_t ledCount );
+        PixelBuffer();
        ~PixelBuffer();
+
+        virtual void initialize( uint16_t ledCount );
 
         void setGammaCorrection( double red, double green, double blue );
 
@@ -49,6 +48,53 @@ class PixelBuffer
         void setPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
 
         void getUpdateBuffer( uint8_t **buf, size_t &length ); 
+
+        
+};
+
+// Represent the data for a single pixel 
+typedef struct pixelEntryStructLPD8806 
+{
+    //uint8_t flag;
+  
+    uint8_t blue;
+    uint8_t red;
+    uint8_t green;
+} PIXEL_ENTRY_LPD8806_T;
+
+class PixelBufferLPD8806 : public PixelBuffer
+{
+    private:
+        virtual void writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
+        virtual void writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
+
+    public:
+        PixelBufferLPD8806();
+       ~PixelBufferLPD8806();
+
+        virtual void initialize( uint16_t ledCount );
+};
+
+// Represent the data for a single pixel 
+typedef struct pixelEntryStructAPA102 
+{
+    uint8_t global; 
+    uint8_t blue;
+    uint8_t green;
+    uint8_t red;
+} PIXEL_ENTRY_APA102_T;
+
+class PixelBufferAPA102 : public PixelBuffer
+{
+    private:
+        virtual void writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
+        virtual void writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
+
+    public:
+        PixelBufferAPA102();
+       ~PixelBufferAPA102();
+
+        virtual void initialize( uint16_t ledCount );
 };
 
 class LEDDriver : public EventNotify
@@ -57,15 +103,17 @@ class LEDDriver : public EventNotify
         std::string spiPath;
         int         spifd;
         
-        PixelBuffer pixelData;
+        PixelBuffer *pixelData;
 
 //        SoftEventSource updateEvent;
 
         bool pendingUpdate;
 
     public:
-        LEDDriver( std::string spidev, uint16_t ledCount );
+        LEDDriver();
         ~LEDDriver();
+
+        void initialize( LD_PROTOCOL_T protocol, std::string spidev, uint16_t stringSize );
 
         bool start( EventLoop &loop );
         void stop();

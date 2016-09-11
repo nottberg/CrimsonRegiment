@@ -8,7 +8,7 @@
 #include "ClientMain.hpp"
 
 ClientMain::ClientMain()
-: driver( "/dev/spidev0.0", 150 ), eventSock( 1, "eventSock" )
+: eventSock( 1, "eventSock" )
 {
 
 }
@@ -23,6 +23,20 @@ ClientMain::setup()
 {
     // Load the client configuration file
     config.load();
+
+    if( config.getProtocol() == "apa102" )
+    {
+        driver.initialize( LD_PROTOCOL_APA102, "/dev/spidev0.0", config.getLEDCount() );
+    }
+    else if( config.getProtocol() == "lpd8809" )
+    {
+        driver.initialize( LD_PROTOCOL_LPD8806, "/dev/spidev0.0", config.getLEDCount() );
+    }
+    else
+    {
+        std::cerr << "LED protocol " << config.getProtocol() << " is not supported.  Exiting." << std::endl;
+        return true;
+    }
 
     // Load the sequence file
     seqConfig.load( config.getID() );

@@ -16,13 +16,10 @@ class CRLEDClientConfigFile
     private:
         std::string id;
         
-        uint32_t ledCnt;
+        std::string protocol;
+        uint32_t    ledCnt;
 
         bool parseLEDConfig( void *ledPtr );
-//        bool parseClientList( void *listPtr );
-
-//        bool parseMidiKey( void *keyPtr, CRLEDMidiKeyBinding &value );
-//        bool parseMidiKeyMap( void *mapPtr );
 
     public:
         CRLEDClientConfigFile();
@@ -33,8 +30,8 @@ class CRLEDClientConfigFile
         bool load();
 
         std::string getID();
+        std::string getProtocol();
         uint32_t    getLEDCount();
-
 };
 
 #endif // __CRLED_CLIENT_CONFIG_FILE_HPP__

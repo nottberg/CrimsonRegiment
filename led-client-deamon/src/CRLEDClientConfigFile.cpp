@@ -28,6 +28,12 @@ CRLEDClientConfigFile::getID()
     return id;
 }
 
+std::string 
+CRLEDClientConfigFile::getProtocol()
+{
+    return protocol;
+}
+
 uint32_t
 CRLEDClientConfigFile::getLEDCount()
 {
@@ -46,11 +52,12 @@ CRLEDClientConfigFile::parseLEDConfig( void *ledPtr )
         {
             printf( "node type: Element, name: %s\n", nodePtr->name );
 
-            if( xmlStrEqual( nodePtr->name, (xmlChar *)"type" ) )
+            if( xmlStrEqual( nodePtr->name, (xmlChar *)"protocol" ) )
             {
                 xmlChar *cStr;
 
                 cStr = xmlNodeGetContent( nodePtr );
+                protocol = (const char *)cStr;
 
                 xmlFree( cStr );
             }
@@ -257,7 +264,7 @@ CRLEDClientConfigFile::load()
             }
             else if( xmlStrEqual( cur_node->name, (xmlChar *)"led-config" ) )
             {
-//                parseMidiKeyMap( cur_node );
+                parseLEDConfig( cur_node );
             } 
 
         }
