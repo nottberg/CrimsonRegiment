@@ -108,8 +108,8 @@ class CRLSSRegionChange : public CRLSeqStep
 
 };
 
-// Do a timed fill of a region
-class CRLSSLinearFill : public CRLSeqStep
+// Record a linear fill region
+class CRLSSLinearFillRegion
 {
     private:
         uint8_t red;
@@ -125,7 +125,22 @@ class CRLSSLinearFill : public CRLSeqStep
         uint32_t nextIndx;
         struct timeval nextTime;
 
-//        bool parseRangeEntry( void *rangeNode );
+    public:
+        CRLSSLinearFillRegion();
+       ~CRLSSLinearFillRegion();
+
+        virtual bool initFromStepNode( void *stepPtr ); 
+
+        LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt );
+
+        LS_STEP_UPDATE_RESULT_T updateRT( struct timeval *curTime, LEDDriver *leds );
+};
+
+// Do a timed fill of a region
+class CRLSSLinearFill : public CRLSeqStep
+{
+    private:
+        std::vector< CRLSSLinearFillRegion > regionList;
 
     public:
         CRLSSLinearFill();

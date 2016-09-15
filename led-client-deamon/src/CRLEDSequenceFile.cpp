@@ -338,7 +338,9 @@ CRLSSRegionChange::updateRT( struct timeval *curTime, LEDDriver *leds )
     return LS_STEP_UPDATE_RESULT_DONE;
 }
 
-CRLSSLinearFill::CRLSSLinearFill()
+
+
+CRLSSLinearFillRegion::CRLSSLinearFillRegion()
 {
     red   = 255;
     green = 255;
@@ -350,13 +352,13 @@ CRLSSLinearFill::CRLSSLinearFill()
     delay      = 100;
 }
 
-CRLSSLinearFill::~CRLSSLinearFill()
+CRLSSLinearFillRegion::~CRLSSLinearFillRegion()
 {
 
 }
 
 bool 
-CRLSSLinearFill::initFromStepNode( void *stepPtr )
+CRLSSLinearFillRegion::initFromStepNode( void *stepPtr )
 {
     xmlNode *nodePtr = NULL;
 
@@ -387,7 +389,7 @@ CRLSSLinearFill::initFromStepNode( void *stepPtr )
 
                 xmlFree( cStr );
             }
-            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"interations" ) )
+            else if( xmlStrEqual( nodePtr->name, (xmlChar *)"iterations" ) )
             {
                 xmlChar *cStr;
 
@@ -478,14 +480,14 @@ CRLSSLinearFill::initFromStepNode( void *stepPtr )
 }
 
 LS_STEP_UPDATE_RESULT_T 
-CRLSSLinearFill::initRT( CRLEDCommandPacket *cmdPkt )
+CRLSSLinearFillRegion::initRT( CRLEDCommandPacket *cmdPkt )
 {
     curiter  = 0;
     nextIndx = startIndex;
 }
 
 LS_STEP_UPDATE_RESULT_T 
-CRLSSLinearFill::updateRT( struct timeval *curTime, LEDDriver *leds )
+CRLSSLinearFillRegion::updateRT( struct timeval *curTime, LEDDriver *leds )
 {
     std::cout << "CRLSSLinearFill::updateRT - " << curTime->tv_sec << ":" << nextTime.tv_sec << std::endl;
     std::cout << "CRLSSLinearFill::updateRT - " << curTime->tv_usec << ":" << nextTime.tv_usec << std::endl;
@@ -535,6 +537,87 @@ CRLSSLinearFill::updateRT( struct timeval *curTime, LEDDriver *leds )
     }  
 
     // Still in this step wait for next update
+    return LS_STEP_UPDATE_RESULT_CONT;
+}
+
+CRLSSLinearFill::CRLSSLinearFill()
+{
+
+}
+
+CRLSSLinearFill::~CRLSSLinearFill()
+{
+
+}
+
+bool 
+CRLSSLinearFill::initFromStepNode( void *stepPtr )
+{
+    xmlNode *nodePtr = NULL;
+
+    // Traverse the document to pull out the items of interest
+    for( nodePtr = ((xmlNode *)stepPtr)->children; nodePtr; nodePtr = nodePtr->next ) 
+    {
+        if( nodePtr->type == XML_ELEMENT_NODE ) 
+        {
+            printf( "node type: Element, name: %s\n", nodePtr->name );
+
+            if( xmlStrEqual( nodePtr->name, (xmlChar *)"region-list" ) )
+            {
+                xmlNode *regionNode = NULL;
+
+                // Traverse the document to pull out the items of interest
+                for( regionNode = ((xmlNode *)nodePtr)->children; regionNode; regionNode = regionNode->next ) 
+                {
+                    if( regionNode->type == XML_ELEMENT_NODE ) 
+                    {
+                        printf( "node type: Element, name: %s\n", regionNode->name );
+
+                        if( xmlStrEqual( regionNode->name, (xmlChar *)"region" ) )
+                        {
+                            CRLSSLinearFillRegion tmpRegion;
+
+                            tmpRegion.initFromStepNode( regionNode );
+
+                            regionList.push_back( tmpRegion );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSLinearFill::initRT( CRLEDCommandPacket *cmdPkt )
+{
+    for( std::vector< CRLSSLinearFillRegion >::iterator it = regionList.begin(); it != regionList.end(); it++ )
+    {
+        it->initRT( cmdPkt );
+    }
+
+    return LS_STEP_UPDATE_RESULT_CONT;
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSLinearFill::updateRT( struct timeval *curTime, LEDDriver *leds )
+{
+    // Work through every region
+    for( std::vector< CRLSSLinearFillRegion >::iterator it = regionList.begin(); it != regionList.end(); it++ )
+    {
+        LS_STEP_UPDATE_RESULT_T result;
+
+        // Perform region update
+        it->updateRT( curTime, leds );
+
+        // If one of the regions finishes then we are done.
+        if( result != LS_STEP_UPDATE_RESULT_CONT )
+        {
+            return result;
+        }
+    }
+
     return LS_STEP_UPDATE_RESULT_CONT;
 }
 
