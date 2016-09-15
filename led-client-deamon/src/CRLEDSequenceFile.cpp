@@ -609,7 +609,7 @@ CRLSSLinearFill::updateRT( struct timeval *curTime, LEDDriver *leds )
         LS_STEP_UPDATE_RESULT_T result;
 
         // Perform region update
-        it->updateRT( curTime, leds );
+        result = it->updateRT( curTime, leds );
 
         // If one of the regions finishes then we are done.
         if( result != LS_STEP_UPDATE_RESULT_CONT )
