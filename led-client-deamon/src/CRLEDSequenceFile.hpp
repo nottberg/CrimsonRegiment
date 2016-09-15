@@ -205,6 +205,56 @@ class CRLSSTransform : public CRLSeqStep
 
 };
 
+typedef enum CRLSSSparklePixelStateEnum{
+    SPARKLE_PIXEL_STATE_NA,
+    SPARKLE_PIXEL_STATE_INIT,
+    SPARKLE_PIXEL_STATE_ON,
+    SPARKLE_PIXEL_STATE_RAMP_UP,
+    SPARKLE_PIXEL_STATE_RAMP_DOWN,
+    SPARKLE_PIXEL_STATE_OFF
+}SPARKLE_PIXEL_STATE_T;
+
+// SparklePixel
+class CRLSSSparklePixel
+{
+    public:
+        SPARKLE_PIXEL_STATE_T state;
+
+        uint32_t onTime;
+        uint32_t offTime;
+        uint32_t onRampTime;
+        uint32_t offRampTime;
+
+        uint8_t pvalue;
+
+        struct timeval nextTime;
+
+        CRLSSSparklePixel();
+       ~CRLSSSparklePixel();
+
+};
+
+// Make things sparkle
+class CRLSSSparkle : public CRLSeqStep
+{
+    private:
+        std::vector< CRLSSSparklePixel > pixelList;
+
+    public:
+        CRLSSSparkle();
+       ~CRLSSSparkle();
+
+        virtual bool initFromStepNode( void *stepPtr ); 
+
+        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt );
+
+        virtual LS_STEP_UPDATE_RESULT_T updateRT( struct timeval *curTime, LEDDriver *leds );
+
+};
+
+
+
+
 class CRLStepFactory
 {
     private:

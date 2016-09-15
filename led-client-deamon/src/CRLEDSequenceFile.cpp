@@ -705,6 +705,251 @@ CRLSSTransform::updateRT( struct timeval *curTime, LEDDriver *leds )
     return LS_STEP_UPDATE_RESULT_DONE;
 }
 
+CRLSSSparklePixel::CRLSSSparklePixel()
+{
+    state = SPARKLE_PIXEL_STATE_INIT;
+
+    onTime      = 10;
+    offTime     = 4;
+    onRampTime  = 4;
+    offRampTime = 10;
+
+    pvalue = 0xff;
+}
+
+CRLSSSparklePixel::~CRLSSSparklePixel()
+{
+
+}
+
+CRLSSSparkle::CRLSSSparkle()
+{
+
+}
+
+CRLSSSparkle::~CRLSSSparkle()
+{
+
+}
+
+bool 
+CRLSSSparkle::initFromStepNode( void *stepPtr )
+{
+    xmlNode *nodePtr = NULL;
+#if 0
+    // Traverse the document to pull out the items of interest
+    for( nodePtr = ((xmlNode *)stepPtr)->children; nodePtr; nodePtr = nodePtr->next ) 
+    {
+        if( nodePtr->type == XML_ELEMENT_NODE ) 
+        {
+            printf( "node type: Element, name: %s\n", nodePtr->name );
+
+            if( xmlStrEqual( nodePtr->name, (xmlChar *)"region-list" ) )
+            {
+                xmlNode *regionNode = NULL;
+
+                // Traverse the document to pull out the items of interest
+                for( regionNode = ((xmlNode *)nodePtr)->children; regionNode; regionNode = regionNode->next ) 
+                {
+                    if( regionNode->type == XML_ELEMENT_NODE ) 
+                    {
+                        printf( "node type: Element, name: %s\n", regionNode->name );
+
+                        if( xmlStrEqual( regionNode->name, (xmlChar *)"region" ) )
+                        {
+                            CRLSSSparklePixel tmpRegion;
+
+                            tmpRegion.initFromStepNode( regionNode );
+
+                            regionList.push_back( tmpRegion );
+                        }
+                    }
+                }
+            }
+        }
+    }
+#endif
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSSparkle::initRT( CRLEDCommandPacket *cmdPkt )
+{
+    pixelList.resize( 144 );
+    return LS_STEP_UPDATE_RESULT_CONT;
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
+{
+    // Work through every region
+    uint32_t pixelIndx = 0;
+    for( std::vector< CRLSSSparklePixel >::iterator it = pixelList.begin(); it != pixelList.end(); it++, pixelIndx++ )
+    {
+        switch( it->state )
+        {
+            case SPARKLE_PIXEL_STATE_NA:
+            continue;
+
+            case SPARKLE_PIXEL_STATE_INIT:
+                // Grab the initial time stamp to base things on.
+                it->nextTime.tv_sec  = curTime->tv_sec;
+                it->nextTime.tv_usec = curTime->tv_usec;
+
+                // Turn on the next led
+                leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
+
+                it->nextTime.tv_usec += ( it->onTime * 1000 );
+                while( it->nextTime.tv_usec >= 1000000 )
+                {
+                    it->nextTime.tv_sec  += 1;
+                    it->nextTime.tv_usec -= 1000000; 
+                }  
+
+                it->state = SPARKLE_PIXEL_STATE_ON;
+            break;
+
+            case SPARKLE_PIXEL_STATE_ON:
+            {
+                // If we are already behind by a full sec, then trigger
+                if( curTime->tv_sec < it->nextTime.tv_sec )
+                    continue;
+
+                // If the seconds is the same, check the usec instead.
+                if( curTime->tv_sec == it->nextTime.tv_sec )
+                {    
+                    if( curTime->tv_usec < it->nextTime.tv_usec )
+                        continue;
+                }
+
+                // Dim by a quarter
+                it->pvalue -= 64;
+
+                // Turn on the next led
+                leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
+
+                it->nextTime.tv_usec += ( it->offRampTime * 1000 );
+                while( it->nextTime.tv_usec >= 1000000 )
+                {
+                    it->nextTime.tv_sec  += 1;
+                    it->nextTime.tv_usec -= 1000000; 
+                }  
+
+                it->state = SPARKLE_PIXEL_STATE_RAMP_DOWN;
+            }
+            break;
+
+            case SPARKLE_PIXEL_STATE_OFF:
+                // If we are already behind by a full sec, then trigger
+                if( curTime->tv_sec < it->nextTime.tv_sec )
+                    continue;
+
+                // If the seconds is the same, check the usec instead.
+                if( curTime->tv_sec == it->nextTime.tv_sec )
+                {    
+                    if( curTime->tv_usec < it->nextTime.tv_usec )
+                        continue;
+                }
+
+                // Brighten by a quarter
+                it->pvalue += 64;
+
+                // Turn on the next led
+                leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
+
+                it->nextTime.tv_usec += ( it->onRampTime * 1000 );
+                while( it->nextTime.tv_usec >= 1000000 )
+                {
+                    it->nextTime.tv_sec  += 1;
+                    it->nextTime.tv_usec -= 1000000; 
+                }  
+
+                it->state = SPARKLE_PIXEL_STATE_RAMP_UP;
+            break;
+
+            case SPARKLE_PIXEL_STATE_RAMP_UP:
+                // If we are already behind by a full sec, then trigger
+                if( curTime->tv_sec < it->nextTime.tv_sec )
+                    continue;
+
+                // If the seconds is the same, check the usec instead.
+                if( curTime->tv_sec == it->nextTime.tv_sec )
+                {    
+                    if( curTime->tv_usec < it->nextTime.tv_usec )
+                        continue;
+                }
+
+                // Dim by a quarter
+                it->pvalue -= 64;
+
+                // Turn on the next led
+                leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
+
+                if( it->pvalue == 0xFF )
+                {
+                    it->nextTime.tv_usec += ( it->onTime * 1000 );
+                    while( it->nextTime.tv_usec >= 1000000 )
+                    {
+                        it->nextTime.tv_sec  += 1;
+                        it->nextTime.tv_usec -= 1000000; 
+                    }  
+
+                    it->state = SPARKLE_PIXEL_STATE_ON;
+                    break;
+                }
+               
+                it->nextTime.tv_usec += ( it->onRampTime * 1000 );
+                while( it->nextTime.tv_usec >= 1000000 )
+                {
+                    it->nextTime.tv_sec  += 1;
+                    it->nextTime.tv_usec -= 1000000; 
+                }  
+            break;
+
+            case SPARKLE_PIXEL_STATE_RAMP_DOWN:
+                // If we are already behind by a full sec, then trigger
+                if( curTime->tv_sec < it->nextTime.tv_sec )
+                    continue;
+
+                // If the seconds is the same, check the usec instead.
+                if( curTime->tv_sec == it->nextTime.tv_sec )
+                {    
+                    if( curTime->tv_usec < it->nextTime.tv_usec )
+                        continue;
+                }
+
+                // Dim by a quarter
+                it->pvalue -= 64;
+
+                // Turn on the next led
+                leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
+
+                if( it->pvalue == 0 )
+                {
+                    it->nextTime.tv_usec += ( it->offTime * 1000 );
+                    while( it->nextTime.tv_usec >= 1000000 )
+                    {
+                        it->nextTime.tv_sec  += 1;
+                        it->nextTime.tv_usec -= 1000000; 
+                    }  
+
+                    it->state = SPARKLE_PIXEL_STATE_OFF;
+                    break;
+                }
+               
+                it->nextTime.tv_usec += ( it->offRampTime * 1000 );
+                while( it->nextTime.tv_usec >= 1000000 )
+                {
+                    it->nextTime.tv_sec  += 1;
+                    it->nextTime.tv_usec -= 1000000; 
+                }  
+            break;
+        }
+
+    }
+
+    return LS_STEP_UPDATE_RESULT_CONT;
+}
+
 CRLSeqStep* 
 CRLStepFactory::allocateStepForType( std::string type )
 {
@@ -722,6 +967,8 @@ CRLStepFactory::allocateStepForType( std::string type )
         return new CRLSSTransform;
     else if( type == "linear-fill" )
         return new CRLSSLinearFill;
+    else if( type == "sparkle" )
+        return new CRLSSSparkle;
     
     return new CRLSeqStep;
 }
