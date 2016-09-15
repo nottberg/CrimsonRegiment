@@ -24,7 +24,7 @@ CRLSeqStep::initFromStepNode( void *stepPtr )
 }
 
 LS_STEP_UPDATE_RESULT_T 
-CRLSeqStep::initRT( CRLEDCommandPacket *cmdPkt )
+CRLSeqStep::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
 {
     return LS_STEP_UPDATE_RESULT_DONE;
 }
@@ -52,7 +52,7 @@ CRLSSWaitForStart::initFromStepNode( void *stepPtr )
 }
 
 LS_STEP_UPDATE_RESULT_T 
-CRLSSWaitForStart::initRT( CRLEDCommandPacket *cmdPkt )
+CRLSSWaitForStart::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
 {
     startTime.tv_sec  = cmdPkt->getTSSec();
     startTime.tv_usec = cmdPkt->getTSUSec();
@@ -99,7 +99,7 @@ CRLSSClear::initFromStepNode( void *stepPtr )
 }
 
 LS_STEP_UPDATE_RESULT_T 
-CRLSSClear::initRT( CRLEDCommandPacket *cmdPkt )
+CRLSSClear::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
 {
     return LS_STEP_UPDATE_RESULT_DONE;
 }
@@ -301,7 +301,7 @@ CRLSSRegionChange::initFromStepNode( void *stepPtr )
 }
 
 LS_STEP_UPDATE_RESULT_T 
-CRLSSRegionChange::initRT( CRLEDCommandPacket *cmdPkt )
+CRLSSRegionChange::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
 {
     return LS_STEP_UPDATE_RESULT_DONE;
 }
@@ -590,7 +590,7 @@ CRLSSLinearFill::initFromStepNode( void *stepPtr )
 }
 
 LS_STEP_UPDATE_RESULT_T 
-CRLSSLinearFill::initRT( CRLEDCommandPacket *cmdPkt )
+CRLSSLinearFill::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
 {
     for( std::vector< CRLSSLinearFillRegion >::iterator it = regionList.begin(); it != regionList.end(); it++ )
     {
@@ -638,7 +638,7 @@ CRLSSDwell::initFromStepNode( void *stepPtr )
 }
 
 LS_STEP_UPDATE_RESULT_T 
-CRLSSDwell::initRT( CRLEDCommandPacket *cmdPkt )
+CRLSSDwell::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
 {
     return LS_STEP_UPDATE_RESULT_DONE;
 }
@@ -666,7 +666,7 @@ CRLSSGoto::initFromStepNode( void *stepPtr )
 }
 
 LS_STEP_UPDATE_RESULT_T 
-CRLSSGoto::initRT( CRLEDCommandPacket *cmdPkt )
+CRLSSGoto::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
 {
     return LS_STEP_UPDATE_RESULT_DONE;
 }
@@ -694,7 +694,7 @@ CRLSSTransform::initFromStepNode( void *stepPtr )
 }
 
 LS_STEP_UPDATE_RESULT_T 
-CRLSSTransform::initRT( CRLEDCommandPacket *cmdPkt )
+CRLSSTransform::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
 {
     return LS_STEP_UPDATE_RESULT_DONE;
 }
@@ -772,9 +772,38 @@ CRLSSSparkle::initFromStepNode( void *stepPtr )
 }
 
 LS_STEP_UPDATE_RESULT_T 
-CRLSSSparkle::initRT( CRLEDCommandPacket *cmdPkt )
+CRLSSSparkle::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
 {
-    pixelList.resize( 144 );
+    pixelList.resize( leds->getPixelCount() );
+    
+    srand( 5 );
+
+    for( std::vector< CRLSSSparklePixel >::iterator it = pixelList.begin(); it != pixelList.end(); it++ )
+    {
+        int r = rand();
+
+        it->onTime      = 1 + r;
+        it->offTime     = 1 + r;
+
+        r = rand();
+
+        it->onRampTime = 20;
+        if( r < (RAND_MAX / 3) )
+            it->onRampTime += 10;
+        else if( r > (2*(RAND_MAX / 3) ) )
+            it->onRampTime -= 10;
+
+        r = rand();
+
+        it->offRampTime = 20;
+        if( r < (RAND_MAX / 3) )
+            it->offRampTime += 10;
+        else if( r > (2*(RAND_MAX / 3) ) )
+            it->offRampTime -= 10;
+
+        printf( "sparkle: %d, %d, %d, %d\n", it->onTime, it->offTime, it->onRampTime, it->offRampTime );
+    }
+
     return LS_STEP_UPDATE_RESULT_CONT;
 }
 
@@ -822,7 +851,7 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
                 }
 
                 // Dim by a quarter
-                it->pvalue -= 64;
+                it->pvalue -= 32;
 
                 // Turn on the next led
                 leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
@@ -851,7 +880,7 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
                 }
 
                 // Brighten by a quarter
-                it->pvalue += 64;
+                it->pvalue += 32;
 
                 // Turn on the next led
                 leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
@@ -879,7 +908,7 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
                 }
 
                 // Dim by a quarter
-                it->pvalue -= 64;
+                it->pvalue -= 32;
 
                 // Turn on the next led
                 leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
@@ -918,7 +947,7 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
                 }
 
                 // Dim by a quarter
-                it->pvalue -= 64;
+                it->pvalue -= 32;
 
                 // Turn on the next led
                 leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
@@ -1019,7 +1048,7 @@ CRLSeqRecord::activateRT( CRLEDCommandPacket *cmdPkt, struct timeval *curTime, L
     // Initialize all of the steps
     for( std::vector< CRLSeqStep* >::iterator it = stepList.begin(); it != stepList.end(); it++ )
     {
-        (*it)->initRT( cmdPkt );
+        (*it)->initRT( cmdPkt, leds );
     }
 
     // Run an update step in case we are behind

@@ -31,7 +31,7 @@ class CRLSeqStep
 
         virtual bool initFromStepNode( void *stepPtr ); 
 
-        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt );
+        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds );
 
         virtual LS_STEP_UPDATE_RESULT_T updateRT( struct timeval *curTime, LEDDriver *leds );
 };
@@ -47,7 +47,7 @@ class CRLSSWaitForStart : public CRLSeqStep
 
         virtual bool initFromStepNode( void *stepPtr ); 
 
-        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt );
+        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds );
 
         virtual LS_STEP_UPDATE_RESULT_T updateRT( struct timeval *curTime, LEDDriver *leds );
 };
@@ -63,7 +63,7 @@ class CRLSSClear : public CRLSeqStep
 
         virtual bool initFromStepNode( void *stepPtr ); 
 
-        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt );
+        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds );
 
         virtual LS_STEP_UPDATE_RESULT_T updateRT( struct timeval *curTime, LEDDriver *leds );
 
@@ -102,7 +102,7 @@ class CRLSSRegionChange : public CRLSeqStep
 
         virtual bool initFromStepNode( void *stepPtr ); 
 
-        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt );
+        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds );
 
         virtual LS_STEP_UPDATE_RESULT_T updateRT( struct timeval *curTime, LEDDriver *leds );
 
@@ -148,7 +148,7 @@ class CRLSSLinearFill : public CRLSeqStep
 
         virtual bool initFromStepNode( void *stepPtr ); 
 
-        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt );
+        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds );
 
         virtual LS_STEP_UPDATE_RESULT_T updateRT( struct timeval *curTime, LEDDriver *leds );
 
@@ -165,7 +165,7 @@ class CRLSSDwell : public CRLSeqStep
 
         virtual bool initFromStepNode( void *stepPtr ); 
 
-        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt );
+        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds );
 
         virtual LS_STEP_UPDATE_RESULT_T updateRT( struct timeval *curTime, LEDDriver *leds );
 
@@ -182,7 +182,7 @@ class CRLSSGoto : public CRLSeqStep
 
         virtual bool initFromStepNode( void *stepPtr ); 
 
-        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt );
+        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds );
 
         virtual LS_STEP_UPDATE_RESULT_T updateRT( struct timeval *curTime, LEDDriver *leds );
 
@@ -199,7 +199,7 @@ class CRLSSTransform : public CRLSeqStep
 
         virtual bool initFromStepNode( void *stepPtr ); 
 
-        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt );
+        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds );
 
         virtual LS_STEP_UPDATE_RESULT_T updateRT( struct timeval *curTime, LEDDriver *leds );
 
@@ -246,7 +246,7 @@ class CRLSSSparkle : public CRLSeqStep
 
         virtual bool initFromStepNode( void *stepPtr ); 
 
-        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt );
+        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds );
 
         virtual LS_STEP_UPDATE_RESULT_T updateRT( struct timeval *curTime, LEDDriver *leds );
 
