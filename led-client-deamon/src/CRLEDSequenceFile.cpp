@@ -709,10 +709,10 @@ CRLSSSparklePixel::CRLSSSparklePixel()
 {
     state = SPARKLE_PIXEL_STATE_INIT;
 
-    onTime      = 10;
-    offTime     = 4;
-    onRampTime  = 4;
-    offRampTime = 10;
+    onTime      = 100;
+    offTime     = 20;
+    onRampTime  = 20;
+    offRampTime = 100;
 
     pvalue = 0xff;
 }
