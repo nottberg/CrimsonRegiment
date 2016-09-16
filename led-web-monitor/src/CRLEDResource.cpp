@@ -77,6 +77,9 @@ CRLStatusResource::restGet( RESTRequest *request )
             continue;
         }
 
+        // Default the rspTime to the sendTime
+        trackData.rspTime = trackData.sendTime;
+
         cmdPkt.setParam1( (uint32_t) it->sin_addr.s_addr );
         cmdPkt.setParam2( sendIndx );
         cmdPkt.setParam3( 0 );
