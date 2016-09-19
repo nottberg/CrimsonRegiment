@@ -92,7 +92,7 @@ CRLStatusResource::restGet( RESTRequest *request )
         }
 
         // Wait for a response
-        while( ( trackData.error == false ) && ( trackData.rspRcvd == false ) && ( trackData.rspTime.tv_sec < ( trackData.sendTime.tv_sec + 2 ) ) )
+        while( ( trackData.error == false ) && ( trackData.rspRcvd == false ) && ( trackData.rspTime.tv_sec < ( trackData.sendTime.tv_sec + 1 ) ) )
         {
             int32_t            bytesRead;
             CRLEDCommandPacket cmdPkt;
