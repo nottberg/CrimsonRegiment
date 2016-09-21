@@ -470,8 +470,8 @@ LEDDriver::testSequence()
 
        processUpdates();
 
-       // Sleep 2 seconds
-       sleep(2);
+       // Sleep 1 seconds
+       sleep(1);
 
        // Turn all LED off
        for( pIndx = 0; pIndx < getPixelCount(); pIndx++ )
@@ -481,8 +481,8 @@ LEDDriver::testSequence()
 
        processUpdates();
        
-       // Sleep 2 seconds
-       sleep(2);
+       // Sleep 1 seconds
+       sleep(1);
    }
 }
 
