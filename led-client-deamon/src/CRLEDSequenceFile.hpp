@@ -240,6 +240,9 @@ class CRLSSSparkle : public CRLSeqStep
     private:
         std::vector< CRLSSSparklePixel > pixelList;
 
+        bool checkTime( struct timeval *curTime, struct timeval *targetTime );
+        void updateTime( struct timeval *curTime, struct timeval *nextTime, uint32_t deltaMS );
+
     public:
         CRLSSSparkle();
        ~CRLSSSparkle();

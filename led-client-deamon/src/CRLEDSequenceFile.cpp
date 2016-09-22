@@ -709,10 +709,10 @@ CRLSSSparklePixel::CRLSSSparklePixel()
 {
     state = SPARKLE_PIXEL_STATE_INIT;
 
-    onTime      = 100;
-    offTime     = 20;
+    onTime      = 1000;
+    offTime     = 1000;
     onRampTime  = 20;
-    offRampTime = 100;
+    offRampTime = 20;
 
     pvalue = 0xff;
 }
@@ -782,6 +782,8 @@ CRLSSSparkle::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
     {
         int r = rand();
 
+        it->state = SPARKLE_PIXEL_STATE_INIT;
+
         it->onTime = 500;
         it->offTime = 500;
         if( r < (RAND_MAX / 3) )
@@ -817,6 +819,37 @@ CRLSSSparkle::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
     return LS_STEP_UPDATE_RESULT_CONT;
 }
 
+bool 
+CRLSSSparkle::checkTime( struct timeval *curTime, struct timeval *targetTime )
+{
+    // If we are already behind by a full sec, then trigger
+    if( curTime->tv_sec < targetTime->tv_sec )
+        return true;
+
+    // If the seconds is the same, check the usec instead.
+    if( curTime->tv_sec == targetTime->tv_sec )
+    {    
+        if( curTime->tv_usec < targetTime->tv_usec )
+            return true;
+    }
+
+    return false;
+}
+
+void
+CRLSSSparkle::updateTime( struct timeval *curTime, struct timeval *nextTime, uint32_t deltaMS )
+{
+    nextTime->tv_sec  = curTime->tv_sec;
+    nextTime->tv_usec = curTime->tv_usec;
+
+    nextTime->tv_usec += ( deltaMS * 1000 );
+    while( nextTime->tv_usec >= 1000000 )
+    {
+        nextTime->tv_sec  += 1;
+        nextTime->tv_usec -= 1000000; 
+    }  
+}
+
 LS_STEP_UPDATE_RESULT_T 
 CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
 {
@@ -837,27 +870,16 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
                 // Turn on the next led
                 leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
 
-                it->nextTime.tv_usec += ( it->onTime * 1000 );
-                while( it->nextTime.tv_usec >= 1000000 )
-                {
-                    it->nextTime.tv_sec  += 1;
-                    it->nextTime.tv_usec -= 1000000; 
-                }  
-
+                updateTime( curTime, &(it->nextTime), it->onTime );
                 it->state = SPARKLE_PIXEL_STATE_ON;
             break;
 
             case SPARKLE_PIXEL_STATE_ON:
             {
-                // If we are already behind by a full sec, then trigger
-                if( curTime->tv_sec < it->nextTime.tv_sec )
+                // Check if we still need to wait
+                if( checkTime( curTime, &(it->nextTime) ) )
+                {
                     continue;
-
-                // If the seconds is the same, check the usec instead.
-                if( curTime->tv_sec == it->nextTime.tv_sec )
-                {    
-                    if( curTime->tv_usec < it->nextTime.tv_usec )
-                        continue;
                 }
 
                 // Dim by a quarter
@@ -866,27 +888,16 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
                 // Turn on the next led
                 leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
 
-                it->nextTime.tv_usec += ( it->offRampTime * 1000 );
-                while( it->nextTime.tv_usec >= 1000000 )
-                {
-                    it->nextTime.tv_sec  += 1;
-                    it->nextTime.tv_usec -= 1000000; 
-                }  
-
+                updateTime( curTime, &(it->nextTime), it->offRampTime );
                 it->state = SPARKLE_PIXEL_STATE_RAMP_DOWN;
             }
             break;
 
             case SPARKLE_PIXEL_STATE_OFF:
-                // If we are already behind by a full sec, then trigger
-                if( curTime->tv_sec < it->nextTime.tv_sec )
+                // Check if we still need to wait
+                if( checkTime( curTime, &(it->nextTime) ) )
+                {
                     continue;
-
-                // If the seconds is the same, check the usec instead.
-                if( curTime->tv_sec == it->nextTime.tv_sec )
-                {    
-                    if( curTime->tv_usec < it->nextTime.tv_usec )
-                        continue;
                 }
 
                 // Brighten by a quarter
@@ -895,26 +906,15 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
                 // Turn on the next led
                 leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
 
-                it->nextTime.tv_usec += ( it->onRampTime * 1000 );
-                while( it->nextTime.tv_usec >= 1000000 )
-                {
-                    it->nextTime.tv_sec  += 1;
-                    it->nextTime.tv_usec -= 1000000; 
-                }  
-
+                updateTime( curTime, &(it->nextTime), it->onRampTime );
                 it->state = SPARKLE_PIXEL_STATE_RAMP_UP;
             break;
 
             case SPARKLE_PIXEL_STATE_RAMP_UP:
-                // If we are already behind by a full sec, then trigger
-                if( curTime->tv_sec < it->nextTime.tv_sec )
+                // Check if we still need to wait
+                if( checkTime( curTime, &(it->nextTime) ) )
+                {
                     continue;
-
-                // If the seconds is the same, check the usec instead.
-                if( curTime->tv_sec == it->nextTime.tv_sec )
-                {    
-                    if( curTime->tv_usec < it->nextTime.tv_usec )
-                        continue;
                 }
 
                 // Dim by a quarter
@@ -925,35 +925,21 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
 
                 if( it->pvalue == 0xFF )
                 {
-                    it->nextTime.tv_usec += ( it->onTime * 1000 );
-                    while( it->nextTime.tv_usec >= 1000000 )
-                    {
-                        it->nextTime.tv_sec  += 1;
-                        it->nextTime.tv_usec -= 1000000; 
-                    }  
+                    updateTime( curTime, &(it->nextTime), it->onTime );
 
                     it->state = SPARKLE_PIXEL_STATE_ON;
-                    break;
+                    continue;
                 }
                
-                it->nextTime.tv_usec += ( it->onRampTime * 1000 );
-                while( it->nextTime.tv_usec >= 1000000 )
-                {
-                    it->nextTime.tv_sec  += 1;
-                    it->nextTime.tv_usec -= 1000000; 
-                }  
+                updateTime( curTime, &(it->nextTime), it->onRampTime );
+
             break;
 
             case SPARKLE_PIXEL_STATE_RAMP_DOWN:
-                // If we are already behind by a full sec, then trigger
-                if( curTime->tv_sec < it->nextTime.tv_sec )
+                // Check if we still need to wait
+                if( checkTime( curTime, &(it->nextTime) ) )
+                {
                     continue;
-
-                // If the seconds is the same, check the usec instead.
-                if( curTime->tv_sec == it->nextTime.tv_sec )
-                {    
-                    if( curTime->tv_usec < it->nextTime.tv_usec )
-                        continue;
                 }
 
                 // Dim by a quarter
@@ -964,23 +950,13 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
 
                 if( it->pvalue == 0 )
                 {
-                    it->nextTime.tv_usec += ( it->offTime * 1000 );
-                    while( it->nextTime.tv_usec >= 1000000 )
-                    {
-                        it->nextTime.tv_sec  += 1;
-                        it->nextTime.tv_usec -= 1000000; 
-                    }  
-
+                    updateTime( curTime, &(it->nextTime), it->offTime );
                     it->state = SPARKLE_PIXEL_STATE_OFF;
-                    break;
+                    continue;
                 }
+
+                updateTime( curTime, &(it->nextTime), it->offRampTime );
                
-                it->nextTime.tv_usec += ( it->offRampTime * 1000 );
-                while( it->nextTime.tv_usec >= 1000000 )
-                {
-                    it->nextTime.tv_sec  += 1;
-                    it->nextTime.tv_usec -= 1000000; 
-                }  
             break;
         }
 
