@@ -784,8 +784,7 @@ CRLSSSparkle::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
         double frac = ((double)r/(double)RAND_MAX);
         it->state = SPARKLE_PIXEL_STATE_INIT;
 
-//        it->onTime = 500;
-//        it->offTime = 500;
+        it->onTime      = 100;
         if( r > (RAND_MAX/2) )
         {
             it->onTime += ((double)100 * frac);
@@ -795,6 +794,7 @@ CRLSSSparkle::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
             it->onTime -= ((double)100 * frac);
         }
 
+        it->offTime     = 800;
         if( r > (RAND_MAX/2) )
         {
             it->offTime += ((double)200 * frac);
@@ -805,7 +805,9 @@ CRLSSSparkle::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
         }
 
         r = rand();
+        frac = ((double)r/(double)RAND_MAX);
 
+        it->onRampTime  = 30;
         if( r > (RAND_MAX/2) )
         {
             it->onRampTime += ((double)20 * frac);
@@ -816,7 +818,9 @@ CRLSSSparkle::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
         }
 
         r = rand();
+        frac = ((double)r/(double)RAND_MAX);
 
+        it->offRampTime = 40;
         if( r > (RAND_MAX/2) )
         {
             it->offRampTime += ((double)20 * frac);
