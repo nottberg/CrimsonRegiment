@@ -983,6 +983,205 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
     return LS_STEP_UPDATE_RESULT_CONT;
 }
 
+
+
+CRLSSDecayPixel::CRLSSDecayPixel()
+{
+#if 0
+    state = SPARKLE_PIXEL_STATE_INIT;
+
+    onTime      = 100;
+    offTime     = 800;
+    onRampTime  = 30;
+    offRampTime = 40;
+
+    pvalue = 0xff;
+#endif
+}
+
+CRLSSDecayPixel::~CRLSSDecayPixel()
+{
+
+}
+
+CRLSSDecay::CRLSSDecay()
+{
+
+}
+
+CRLSSDecay::~CRLSSDecay()
+{
+
+}
+
+bool 
+CRLSSDecay::initFromStepNode( void *stepPtr )
+{
+    xmlNode *nodePtr = NULL;
+#if 0
+    // Traverse the document to pull out the items of interest
+    for( nodePtr = ((xmlNode *)stepPtr)->children; nodePtr; nodePtr = nodePtr->next ) 
+    {
+        if( nodePtr->type == XML_ELEMENT_NODE ) 
+        {
+            printf( "node type: Element, name: %s\n", nodePtr->name );
+
+            if( xmlStrEqual( nodePtr->name, (xmlChar *)"region-list" ) )
+            {
+                xmlNode *regionNode = NULL;
+
+                // Traverse the document to pull out the items of interest
+                for( regionNode = ((xmlNode *)nodePtr)->children; regionNode; regionNode = regionNode->next ) 
+                {
+                    if( regionNode->type == XML_ELEMENT_NODE ) 
+                    {
+                        printf( "node type: Element, name: %s\n", regionNode->name );
+
+                        if( xmlStrEqual( regionNode->name, (xmlChar *)"region" ) )
+                        {
+                            CRLSSSparklePixel tmpRegion;
+
+                            tmpRegion.initFromStepNode( regionNode );
+
+                            regionList.push_back( tmpRegion );
+                        }
+                    }
+                }
+            }
+        }
+    }
+#endif
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSDecay::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
+{
+    pixelList.resize( leds->getPixelCount() );
+    
+    srand( 15 );
+
+    uint32_t pixelIndx = 0;
+    for( std::vector< CRLSSDecayPixel >::iterator it = pixelList.begin(); it != pixelList.end(); it++, pixelIndx++ )
+    {
+        int r = rand();
+        double frac = ((double)r/(double)RAND_MAX);
+        
+        it->shouldDecay = true;
+        it->ramping     = false;
+        it->decayDelay  = 10 * pixelIndx;
+   
+        if( r > (RAND_MAX/2) )
+        {
+            it->decayDelay += ((double)20 * frac);
+        }
+        else
+        {
+            it->decayDelay -= ((double)20 * frac);
+        }
+
+        it->decayRamp = 20;
+        if( r > (RAND_MAX/2) )
+        {
+            it->decayRamp += ((double)20 * frac);
+        }
+        else
+        {
+            it->decayRamp -= ((double)20 * frac);
+        }
+
+    }
+
+    return LS_STEP_UPDATE_RESULT_CONT;
+}
+
+bool 
+CRLSSDecay::checkTime( struct timeval *curTime, struct timeval *targetTime )
+{
+    // If we are already behind by a full sec, then trigger
+    if( curTime->tv_sec < targetTime->tv_sec )
+        return true;
+
+    // If the seconds is the same, check the usec instead.
+    if( curTime->tv_sec == targetTime->tv_sec )
+    {    
+        if( curTime->tv_usec < targetTime->tv_usec )
+            return true;
+    }
+
+    return false;
+}
+
+void
+CRLSSDecay::updateTime( struct timeval *curTime, struct timeval *nextTime, uint32_t deltaMS )
+{
+    nextTime->tv_sec  = curTime->tv_sec;
+    nextTime->tv_usec = curTime->tv_usec;
+
+    nextTime->tv_usec += ( deltaMS * 1000 );
+    while( nextTime->tv_usec >= 1000000 )
+    {
+        nextTime->tv_sec  += 1;
+        nextTime->tv_usec -= 1000000; 
+    }  
+}
+
+LS_STEP_UPDATE_RESULT_T 
+CRLSSDecay::updateRT( struct timeval *curTime, LEDDriver *leds )
+{
+    // Work through every region
+    uint32_t pixelIndx = 0;
+    for( std::vector< CRLSSDecayPixel >::iterator it = pixelList.begin(); it != pixelList.end(); it++, pixelIndx++ )
+    {
+        if( it->shouldDecay == false )
+            continue;
+
+        if( it->ramping == false )
+        {
+            updateTime( curTime, &(it->nextTime), it->decayDelay );
+            it->ramping = true;
+            continue;
+        }
+
+        // Check if it is time to do something
+        if( checkTime( curTime, &(it->nextTime) ) )
+        {
+            continue;
+        }
+
+        // Read the pixel value and subtract some.
+        uint8_t red, green, blue;
+
+        leds->getPixel( pixelIndx, red, green, blue );
+
+        red = (red > 10) ? (red - 10) : 0;
+        green = (green > 10) ? (green - 10) : 0;
+        blue = (blue > 10) ? (blue - 10) : 0;
+
+        leds->setPixel( pixelIndx, red, green, blue );
+
+        // Set up for next decay.
+        updateTime( curTime, &(it->nextTime), it->decayRamp );
+    }
+
+    return LS_STEP_UPDATE_RESULT_CONT;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 CRLSeqStep* 
 CRLStepFactory::allocateStepForType( std::string type )
 {
@@ -1002,6 +1201,8 @@ CRLStepFactory::allocateStepForType( std::string type )
         return new CRLSSLinearFill;
     else if( type == "sparkle" )
         return new CRLSSSparkle;
+    else if( type == "decay" )
+        return new CRLSSDecay;
     
     return new CRLSeqStep;
 }

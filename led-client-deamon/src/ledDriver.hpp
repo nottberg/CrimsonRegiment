@@ -34,6 +34,8 @@ class PixelBuffer
         virtual void writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue ) = 0;
         virtual void writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue ) = 0;
 
+        virtual void readPixel( uint16_t pixelIndex, uint8_t &red, uint8_t &green, uint8_t &blue ) = 0;
+
     public:
         PixelBuffer();
        ~PixelBuffer();
@@ -48,6 +50,8 @@ class PixelBuffer
         void clearPixel( uint16_t pixelIndex );
 
         void setPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
+
+        void getPixel( uint16_t pixelIndex, uint8_t &red, uint8_t &green, uint8_t &blue );
 
         void getUpdateBuffer( uint8_t **buf, size_t &length ); 
 
@@ -70,6 +74,8 @@ class PixelBufferLPD8806 : public PixelBuffer
         virtual void writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
         virtual void writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
 
+        virtual void readPixel( uint16_t pixelIndex, uint8_t &red, uint8_t &green, uint8_t &blue );
+
     public:
         PixelBufferLPD8806();
        ~PixelBufferLPD8806();
@@ -91,6 +97,8 @@ class PixelBufferAPA102 : public PixelBuffer
     private:
         virtual void writePixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
         virtual void writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
+
+        virtual void readPixel( uint16_t pixelIndex, uint8_t &red, uint8_t &green, uint8_t &blue );
 
     public:
         PixelBufferAPA102();
@@ -128,6 +136,8 @@ class LEDDriver : public EventNotify
         void clearPixel( uint16_t pixelIndex );
 
         void setPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t blue );
+
+        void getPixel( uint16_t pixelIndex, uint8_t &red, uint8_t &green, uint8_t &blue );
 
         // Signal that an update is pending
         void signalUpdate();

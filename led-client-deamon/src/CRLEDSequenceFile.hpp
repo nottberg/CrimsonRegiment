@@ -255,6 +255,42 @@ class CRLSSSparkle : public CRLSeqStep
 
 };
 
+// DecayPixel
+class CRLSSDecayPixel
+{
+    public:
+        bool shouldDecay;
+        bool ramping;
+
+        struct timeval nextTime;
+
+        uint32_t decayDelay;
+        uint32_t decayRamp;
+
+    CRLSSDecayPixel();
+   ~CRLSSDecayPixel();
+};
+
+// Decay a region
+class CRLSSDecay : public CRLSeqStep
+{
+    private:
+        std::vector< CRLSSDecayPixel > pixelList;
+
+        bool checkTime( struct timeval *curTime, struct timeval *targetTime );
+        void updateTime( struct timeval *curTime, struct timeval *nextTime, uint32_t deltaMS );
+
+    public:
+        CRLSSDecay();
+       ~CRLSSDecay();
+
+        virtual bool initFromStepNode( void *stepPtr ); 
+
+        virtual LS_STEP_UPDATE_RESULT_T initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds );
+
+        virtual LS_STEP_UPDATE_RESULT_T updateRT( struct timeval *curTime, LEDDriver *leds );
+
+};
 
 
 

@@ -120,6 +120,12 @@ PixelBuffer::setPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t 
 }
 
 void 
+PixelBuffer::getPixel( uint16_t pixelIndex, uint8_t &red, uint8_t &green, uint8_t &blue )
+{
+    readPixel( pixelIndex, red, green, blue );
+}
+
+void 
 PixelBuffer::getUpdateBuffer( uint8_t **buf, size_t &length )
 {
     *buf   = bufPtr;
@@ -191,6 +197,21 @@ PixelBufferLPD8806::writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t g
     p->green = greenGammaLookup[ green ];
     p->red   = redGammaLookup[ red ];
     // printf ("index : %i %i %i %i\n",p, p->red  , p->green, p->blue);
+}
+
+void 
+PixelBufferLPD8806::readPixel( uint16_t pixelIndex, uint8_t &red, uint8_t &green, uint8_t &blue ) 
+{
+    PIXEL_ENTRY_LPD8806_T *p = (PIXEL_ENTRY_LPD8806_T *)( bufPtr + ( ( pixelIndex + 3 ) * sizeof( PIXEL_ENTRY_LPD8806_T )  ) );
+
+    if( pixelIndex >= getPixelCount() )
+        return;
+
+    blue  = p->blue;
+    green = p->green;
+    red   = p->red;
+
+//    printf ("index : %i 0x%x %x %x %x\n", pixelIndex, p, p->red  , p->green, p->blue);
 }
 
 
@@ -284,6 +305,24 @@ PixelBufferAPA102::writeGammaPixel( uint16_t pixelIndex, uint8_t red, uint8_t gr
 //    printf ("index : %i 0x%x %x %x %x\n", pixelIndex, p, p->red  , p->green, p->blue);
 }
 
+void 
+PixelBufferAPA102::readPixel( uint16_t pixelIndex, uint8_t &red, uint8_t &green, uint8_t &blue ) 
+{
+    PIXEL_ENTRY_APA102_T *p = (PIXEL_ENTRY_APA102_T *)( bufPtr + ( 4 + ( 4 * pixelIndex ) ) );
+
+    //printf( "apa102 - writePixel: %d  %d\n", pixelIndex, getPixelCount() );
+
+    if( pixelIndex >= getPixelCount() )
+        return;
+
+    //printf( "apa102 - writePixel: 0x%x  0x%x\n", bufPtr, p );
+
+    blue  = p->blue;
+    green = p->green;
+    red   = p->red;
+
+//    printf ("index : %i 0x%x %x %x %x\n", pixelIndex, p, p->red  , p->green, p->blue);
+}
 
 
 LEDDriver::LEDDriver()
@@ -407,6 +446,12 @@ LEDDriver::setPixel( uint16_t pixelIndex, uint8_t red, uint8_t green, uint8_t bl
     pixelData->setPixel( pixelIndex, red, green, blue );
 
     signalUpdate();
+}
+
+void 
+LEDDriver::getPixel( uint16_t pixelIndex, uint8_t &red, uint8_t &green, uint8_t &blue )
+{
+    pixelData->getPixel( pixelIndex, red, green, blue );
 }
 
 void 
