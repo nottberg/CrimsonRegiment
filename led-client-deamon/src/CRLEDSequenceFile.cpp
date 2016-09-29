@@ -686,11 +686,15 @@ CRLSSDwell::updateRT( struct timeval *curTime, LEDDriver *leds )
             endTime.tv_usec -= 1000000; 
         }  
 
+        std::cout << "CRLSSDwell::endTime - " << endTime.tv_sec << " " << endTime.tv_usec << std::endl;
+
         startFlag = false;
     }
 
+    std::cout << "CRLSSDwell::curTime - " << curTime->tv_sec << " " << curTime->tv_usec << std::endl;
+
     // If we are already behind by a full sec, then trigger
-    if( curTime->tv_sec < endTime.tv_sec )
+    if( curTime->tv_sec > endTime.tv_sec )
     {
         std::cout << "CRLSSDwell::updateRT - done" << std::endl;
         return LS_STEP_UPDATE_RESULT_DONE;
@@ -699,7 +703,7 @@ CRLSSDwell::updateRT( struct timeval *curTime, LEDDriver *leds )
     // If the seconds is the same, check the usec instead.
     if( curTime->tv_sec == endTime.tv_sec )
     {    
-        if( curTime->tv_usec < endTime.tv_usec )
+        if( curTime->tv_usec >= endTime.tv_usec )
         {
             std::cout << "CRLSSDwell::updateRT - done" << std::endl;
             return LS_STEP_UPDATE_RESULT_DONE;
