@@ -664,12 +664,14 @@ CRLSSDwell::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
     // First time through so set the wait time
     startFlag = true;
 
-    return LS_STEP_UPDATE_RESULT_DONE;
+    return LS_STEP_UPDATE_RESULT_CONT;
 }
 
 LS_STEP_UPDATE_RESULT_T 
 CRLSSDwell::updateRT( struct timeval *curTime, LEDDriver *leds )
 {
+    std::cout << "CRLSSDwell::updateRT - start" << std::endl;
+
     // Set the dwell time?
     if( startFlag == true )
     {
@@ -689,13 +691,19 @@ CRLSSDwell::updateRT( struct timeval *curTime, LEDDriver *leds )
 
     // If we are already behind by a full sec, then trigger
     if( curTime->tv_sec < endTime.tv_sec )
+    {
+        std::cout << "CRLSSDwell::updateRT - done" << std::endl;
         return LS_STEP_UPDATE_RESULT_DONE;
+    }
 
     // If the seconds is the same, check the usec instead.
     if( curTime->tv_sec == endTime.tv_sec )
     {    
         if( curTime->tv_usec < endTime.tv_usec )
+        {
+            std::cout << "CRLSSDwell::updateRT - done" << std::endl;
             return LS_STEP_UPDATE_RESULT_DONE;
+        }
     }
 
     // Haven't triggered yet so keep waiting.
