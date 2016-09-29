@@ -623,7 +623,7 @@ CRLSSLinearFill::updateRT( struct timeval *curTime, LEDDriver *leds )
 
 CRLSSDwell::CRLSSDwell()
 {
-
+    delayMS = 10;
 }
 
 CRLSSDwell::~CRLSSDwell()
@@ -634,19 +634,72 @@ CRLSSDwell::~CRLSSDwell()
 bool 
 CRLSSDwell::initFromStepNode( void *stepPtr )
 {
+    xmlNode *nodePtr = NULL;
+
+    // Traverse the document to pull out the items of interest
+    for( nodePtr = ((xmlNode *)stepPtr)->children; nodePtr; nodePtr = nodePtr->next ) 
+    {
+        if( nodePtr->type == XML_ELEMENT_NODE ) 
+        {
+            printf( "node type: Element, name: %s\n", nodePtr->name );
+
+            if( xmlStrEqual( nodePtr->name, (xmlChar *)"msec" ) )
+            {
+                xmlChar *cStr;
+
+                cStr = xmlNodeGetContent( nodePtr );
+
+                delayMS = strtol( (const char *)cStr, NULL, 0 );
+
+                xmlFree( cStr );
+            }
+        }
+    }
 
 }
 
 LS_STEP_UPDATE_RESULT_T 
 CRLSSDwell::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
 {
+    // First time through so set the wait time
+    startFlag = true;
+
     return LS_STEP_UPDATE_RESULT_DONE;
 }
 
 LS_STEP_UPDATE_RESULT_T 
 CRLSSDwell::updateRT( struct timeval *curTime, LEDDriver *leds )
 {
-    return LS_STEP_UPDATE_RESULT_DONE;
+    // Set the dwell time?
+    if( startFlag == true )
+    {
+        // Calculate the dwell time
+        endTime.tv_sec  = curTime->tv_sec;
+        endTime.tv_usec = curTime->tv_usec;
+
+        endTime.tv_usec += ( delayMS * 1000 );
+        while( endTime.tv_usec >= 1000000 )
+        {
+            endTime.tv_sec  += 1;
+            endTime.tv_usec -= 1000000; 
+        }  
+
+        startFlag = false;
+    }
+
+    // If we are already behind by a full sec, then trigger
+    if( curTime->tv_sec < endTime.tv_sec )
+        return LS_STEP_UPDATE_RESULT_DONE;
+
+    // If the seconds is the same, check the usec instead.
+    if( curTime->tv_sec == endTime.tv_sec )
+    {    
+        if( curTime->tv_usec < endTime.tv_usec )
+            return LS_STEP_UPDATE_RESULT_DONE;
+    }
+
+    // Haven't triggered yet so keep waiting.
+    return LS_STEP_UPDATE_RESULT_CONT;
 }
 
 CRLSSGoto::CRLSSGoto()

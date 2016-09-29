@@ -158,6 +158,10 @@ class CRLSSLinearFill : public CRLSeqStep
 class CRLSSDwell : public CRLSeqStep
 {
     private:
+        uint32_t       delayMS;
+
+        bool           startFlag;
+        struct timeval endTime;
 
     public:
         CRLSSDwell();
