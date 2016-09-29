@@ -160,7 +160,7 @@ int main( int argc, char **argv )
             }
 
 //            std::cout << "stamp = " << stamp << std::endl;
-
+              std::cout << "key = " << (uint32_t)key << std::endl;             
 //            for( i=0; i<nBytes; i++ )
 //            {
 //                printf( "0x%x ", message[i] );
