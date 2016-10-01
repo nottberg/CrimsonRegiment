@@ -1,6 +1,7 @@
 <cr-led-sequence-config>
   <node-list>
 
+    <!-- This is the colorgaurd ladder -->
     <node id="crled9" max-seqindx="10">
       <sequence index="0">
         <wait-for-start/>
@@ -32,40 +33,329 @@
       </sequence>
     </node>
 
-
-    <node id="crled14" max-seqindx="10">
+    <node id="crled8" max-seqindx="10">
+      <sequence index="0">
+        <wait-for-start/>
+        <clear/>
+      </sequence>
+      <sequence index="1">
+        <wait-for-start/>
+        <sparkle/>
+      </sequence>
+      <sequence index="2">
+        <wait-for-start/>
+        <decay/>
+      </sequence>
       <sequence index="3">
-	<clear/>
-	<region-change>
-	  <action>on</action>
-	  <range-list>
-	    <range>
-	      <start>0</start>
-	      <end>107</end>
-	    </range>
-	  </range-list>
+        <clear/>
+        <region-change>
+          <action>on</action>
+          <range-list>
+            <range>
+              <start>0</start>
+              <end>107</end>
+            </range>
+	      </range-list>
         </region-change>  	
         <dwell>
-	  <msec>100</msec>
-	</dwell>
-	<clear/>
+	      <msec>100</msec>
+	    </dwell>
+        <clear/>
       </sequence>
       <sequence index="4">
         <!-- Just change the index number of this sequence based on what pi we put it on -->
-	<wait-for-start/>
-	<clear/>
-	<linear-fill>
-	  <region-list>
-	    <region>
+        <wait-for-start/>
+        <clear/>
+        <linear-fill>
+          <region-list>
+            <region>
               <start>107</start>
               <increment>-1</increment>
-	      <iterations>107</iterations>
-	      <delay>6</delay>
+              <iterations>107</iterations>
+              <delay>6</delay>
             </region>
-	  </region-list>
-	</linear-fill>
+          </region-list>
+        </linear-fill>
        </sequence>   
     </node>
+
+    <node id="crled10" max-seqindx="10">
+      <sequence index="0">
+        <wait-for-start/>
+        <clear/>
+      </sequence>
+      <sequence index="1">
+        <wait-for-start/>
+        <sparkle/>
+      </sequence>
+      <sequence index="2">
+        <wait-for-start/>
+        <decay/>
+      </sequence>
+      <sequence index="3">
+        <clear/>
+        <region-change>
+          <action>on</action>
+          <range-list>
+            <range>
+              <start>0</start>
+              <end>107</end>
+            </range>
+	      </range-list>
+        </region-change>  	
+        <dwell>
+	      <msec>100</msec>
+	    </dwell>
+        <clear/>
+      </sequence>
+      <sequence index="4">
+        <!-- Just change the index number of this sequence based on what pi we put it on -->
+        <wait-for-start/>
+        <clear/>
+        <linear-fill>
+          <region-list>
+            <region>
+              <start>107</start>
+              <increment>-1</increment>
+              <iterations>107</iterations>
+              <delay>6</delay>
+            </region>
+          </region-list>
+        </linear-fill>
+       </sequence>   
+    </node>
+
+    <node id="crled11" max-seqindx="10">
+      <sequence index="0">
+        <wait-for-start/>
+        <clear/>
+      </sequence>
+      <sequence index="1">
+        <wait-for-start/>
+        <sparkle/>
+      </sequence>
+      <sequence index="2">
+        <wait-for-start/>
+        <decay/>
+      </sequence>
+      <sequence index="3">
+        <clear/>
+        <region-change>
+          <action>on</action>
+          <range-list>
+            <range>
+              <start>0</start>
+              <end>107</end>
+            </range>
+	      </range-list>
+        </region-change>  	
+        <dwell>
+	      <msec>100</msec>
+	    </dwell>
+        <clear/>
+      </sequence>
+      <sequence index="4">
+        <!-- Just change the index number of this sequence based on what pi we put it on -->
+        <wait-for-start/>
+        <clear/>
+        <linear-fill>
+          <region-list>
+            <region>
+              <start>107</start>
+              <increment>-1</increment>
+              <iterations>107</iterations>
+              <delay>6</delay>
+            </region>
+          </region-list>
+        </linear-fill>
+       </sequence>   
+    </node>
+
+    <node id="crled12" max-seqindx="10">
+      <sequence index="0">
+        <wait-for-start/>
+        <clear/>
+      </sequence>
+      <sequence index="1">
+        <wait-for-start/>
+        <sparkle/>
+      </sequence>
+      <sequence index="2">
+        <wait-for-start/>
+        <decay/>
+      </sequence>
+      <sequence index="3">
+        <clear/>
+        <region-change>
+          <action>on</action>
+          <range-list>
+            <range>
+              <start>0</start>
+              <end>107</end>
+            </range>
+	      </range-list>
+        </region-change>  	
+        <dwell>
+	      <msec>100</msec>
+	    </dwell>
+        <clear/>
+      </sequence>
+      <sequence index="4">
+        <!-- Just change the index number of this sequence based on what pi we put it on -->
+        <wait-for-start/>
+        <clear/>
+        <linear-fill>
+          <region-list>
+            <region>
+              <start>107</start>
+              <increment>-1</increment>
+              <iterations>107</iterations>
+              <delay>6</delay>
+            </region>
+          </region-list>
+        </linear-fill>
+       </sequence>   
+    </node>
+
+    <node id="crled13" max-seqindx="10">
+      <sequence index="0">
+        <wait-for-start/>
+        <clear/>
+      </sequence>
+      <sequence index="1">
+        <wait-for-start/>
+        <sparkle/>
+      </sequence>
+      <sequence index="2">
+        <wait-for-start/>
+        <decay/>
+      </sequence>
+      <sequence index="3">
+        <clear/>
+        <region-change>
+          <action>on</action>
+          <range-list>
+            <range>
+              <start>0</start>
+              <end>107</end>
+            </range>
+	      </range-list>
+        </region-change>  	
+        <dwell>
+	      <msec>100</msec>
+	    </dwell>
+        <clear/>
+      </sequence>
+      <sequence index="4">
+        <!-- Just change the index number of this sequence based on what pi we put it on -->
+        <wait-for-start/>
+        <clear/>
+        <linear-fill>
+          <region-list>
+            <region>
+              <start>107</start>
+              <increment>-1</increment>
+              <iterations>107</iterations>
+              <delay>6</delay>
+            </region>
+          </region-list>
+        </linear-fill>
+       </sequence>   
+    </node>
+
+    <!-- This is the center ladder i50-yard line -->
+    <node id="crled14" max-seqindx="10">
+      <sequence index="0">
+        <wait-for-start/>
+        <clear/>
+      </sequence>
+      <sequence index="1">
+        <wait-for-start/>
+        <sparkle/>
+      </sequence>
+      <sequence index="2">
+        <wait-for-start/>
+        <decay/>
+      </sequence>
+      <sequence index="3">
+        <clear/>
+        <region-change>
+          <action>on</action>
+          <range-list>
+            <range>
+              <start>0</start>
+              <end>107</end>
+            </range>
+	      </range-list>
+        </region-change>  	
+        <dwell>
+	      <msec>100</msec>
+	    </dwell>
+        <clear/>
+      </sequence>
+      <sequence index="4">
+        <!-- Just change the index number of this sequence based on what pi we put it on -->
+        <wait-for-start/>
+        <clear/>
+        <linear-fill>
+          <region-list>
+            <region>
+              <start>107</start>
+              <increment>-1</increment>
+              <iterations>107</iterations>
+              <delay>6</delay>
+            </region>
+          </region-list>
+        </linear-fill>
+       </sequence>   
+    </node>
+
+    <node id="crled15" max-seqindx="10">
+      <sequence index="0">
+        <wait-for-start/>
+        <clear/>
+      </sequence>
+      <sequence index="1">
+        <wait-for-start/>
+        <sparkle/>
+      </sequence>
+      <sequence index="2">
+        <wait-for-start/>
+        <decay/>
+      </sequence>
+      <sequence index="3">
+        <clear/>
+        <region-change>
+          <action>on</action>
+          <range-list>
+            <range>
+              <start>0</start>
+              <end>107</end>
+            </range>
+	      </range-list>
+        </region-change>  	
+        <dwell>
+	      <msec>100</msec>
+	    </dwell>
+        <clear/>
+      </sequence>
+      <sequence index="4">
+        <!-- Just change the index number of this sequence based on what pi we put it on -->
+        <wait-for-start/>
+        <clear/>
+        <linear-fill>
+          <region-list>
+            <region>
+              <start>107</start>
+              <increment>-1</increment>
+              <iterations>107</iterations>
+              <delay>6</delay>
+            </region>
+          </region-list>
+        </linear-fill>
+       </sequence>   
+    </node>
+
   </node-list>
 </cr-led-sequence-config>
 
