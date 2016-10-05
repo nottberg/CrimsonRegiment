@@ -860,24 +860,24 @@ CRLSSSparkle::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
 
         it->state = SPARKLE_PIXEL_STATE_INIT;
 
-        it->onTime      = 100;
+        it->onTime      = 40;
         if( r > (RAND_MAX/2) )
         {
-            it->onTime += ((double)75 * frac);
+            it->onTime += ((double)20 * frac);
         }
         else
         {
-            it->onTime -= ((double)75 * frac);
+            it->onTime -= ((double)20 * frac);
         }
 
-        it->offTime     = 100;
+        it->offTime     = 40;
         if( r > (RAND_MAX/2) )
         {
-            it->offTime += ((double)75 * frac);
+            it->offTime += ((double)20 * frac);
         }
         else
         {
-            it->offTime -= ((double)75 * frac);
+            it->offTime -= ((double)20 * frac);
         }
 
         r = rand();
