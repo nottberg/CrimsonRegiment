@@ -843,37 +843,41 @@ CRLSSSparkle::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
     
     srand( 5 );
 
-    uint16_t pixelIndex = 0;
-    for( std::vector< CRLSSSparklePixel >::iterator it = pixelList.begin(); it != pixelList.end(); it++, pixelIndex++ )
+    for( std::vector< CRLSSSparklePixel >::iterator it = pixelList.begin(); it != pixelList.end(); it++ )
     {
-        uint8_t green, blue;
-
         int r = rand();
         double frac = ((double)r/(double)RAND_MAX);
 
         // Read the current pixel value
-        leds->getPixel( pixelIndex, it->pvalue, green, blue );
+        if( frac < 0.25 )
+            it->pvalue = 0xFF;
+        else if( frac < 0.5 )
+            it->pvalue = 0x75;
+        else if( frac < 0.75 )
+            it->pvalue = 0x25;
+        else
+            it->pvalue = 0x00;
 
         it->state = SPARKLE_PIXEL_STATE_INIT;
 
         it->onTime      = 100;
         if( r > (RAND_MAX/2) )
         {
-            it->onTime += ((double)100 * frac);
+            it->onTime += ((double)75 * frac);
         }
         else
         {
-            it->onTime -= ((double)100 * frac);
+            it->onTime -= ((double)75 * frac);
         }
 
-        it->offTime     = 800;
+        it->offTime     = 100;
         if( r > (RAND_MAX/2) )
         {
-            it->offTime += ((double)200 * frac);
+            it->offTime += ((double)75 * frac);
         }
         else
         {
-            it->offTime -= ((double)200 * frac);
+            it->offTime -= ((double)75 * frac);
         }
 
         r = rand();
@@ -965,10 +969,20 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
                     updateTime( curTime, &(it->nextTime), it->onTime );
                     it->state = SPARKLE_PIXEL_STATE_ON;
                 }
-                else
+                else if( it->pvalue == 0 )
+                {
+                    updateTime( curTime, &(it->nextTime), it->offTime );
+                    it->state = SPARKLE_PIXEL_STATE_OFF;
+                }
+                else if( it->pvalue < 127 )
                 {
                     updateTime( curTime, &(it->nextTime), it->onRampTime );
                     it->state = SPARKLE_PIXEL_STATE_RAMP_UP;
+                }
+                else
+                {
+                    updateTime( curTime, &(it->nextTime), it->offRampTime );
+                    it->state = SPARKLE_PIXEL_STATE_RAMP_DOWN;
                 }
 
             break;
