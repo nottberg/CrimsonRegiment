@@ -4,7 +4,6 @@
     <!-- This is the colorgaurd ladder -->
     <node id="crled9" max-seqindx="10">
       <sequence index="0">
-        <wait-for-start/>
         <clear/>
         <linear-fill>
           <region-list>
@@ -24,11 +23,9 @@
         </linear-fill>
       </sequence>
       <sequence index="1">
-        <wait-for-start/>
         <sparkle/>
       </sequence>
       <sequence index="2">
-        <wait-for-start/>
         <decay/>
       </sequence>
     </node>

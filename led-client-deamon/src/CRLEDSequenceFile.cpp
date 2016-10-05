@@ -843,10 +843,17 @@ CRLSSSparkle::initRT( CRLEDCommandPacket *cmdPkt, LEDDriver *leds )
     
     srand( 5 );
 
-    for( std::vector< CRLSSSparklePixel >::iterator it = pixelList.begin(); it != pixelList.end(); it++ )
+    uint16_t pixelIndex = 0;
+    for( std::vector< CRLSSSparklePixel >::iterator it = pixelList.begin(); it != pixelList.end(); it++, pixelIndex++ )
     {
+        uint8_t green, blue;
+
         int r = rand();
         double frac = ((double)r/(double)RAND_MAX);
+
+        // Read the current pixel value
+        leds->getPixel( pixelIndex, it->pvalue, green, blue );
+
         it->state = SPARKLE_PIXEL_STATE_INIT;
 
         it->onTime      = 100;
@@ -953,8 +960,17 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
                 // Turn on the next led
                 leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
 
-                updateTime( curTime, &(it->nextTime), it->onTime );
-                it->state = SPARKLE_PIXEL_STATE_ON;
+                if( it->pvalue == 0xff )
+                {
+                    updateTime( curTime, &(it->nextTime), it->onTime );
+                    it->state = SPARKLE_PIXEL_STATE_ON;
+                }
+                else
+                {
+                    updateTime( curTime, &(it->nextTime), it->onRampTime );
+                    it->state = SPARKLE_PIXEL_STATE_RAMP_UP;
+                }
+
             break;
 
             case SPARKLE_PIXEL_STATE_ON:
@@ -1002,7 +1018,10 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
                 }
 
                 // Dim by a quarter
-                it->pvalue += 51;
+                if( it->pvalue <= (0xFF - 51 ) )
+                    it->pvalue += 51;
+                else
+                    it->pvalue = 0xFF;
 
                 // Turn on the next led
                 leds->setPixel( pixelIndx, it->pvalue, it->pvalue, it->pvalue );
@@ -1027,7 +1046,10 @@ CRLSSSparkle::updateRT( struct timeval *curTime, LEDDriver *leds )
                 }
 
                 // Dim by a quarter
-                it->pvalue -= 51;
+                if( it->pvalue >= 51 )
+                    it->pvalue -= 51;
+                else
+                    it->pvalue = 0;
 
                 if( pixelIndx == 0 )
                     std::cout << "Pixel 0: " << (uint32_t)it->pvalue << std::endl;
