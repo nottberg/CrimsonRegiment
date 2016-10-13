@@ -12,7 +12,8 @@ typedef enum crledCommandOperation
     CRLED_CMDOP_NOTSET   = 0x0,
     CRLED_CMDOP_PING     = 0x1,
     CRLED_CMDOP_SCHEDULE = 0x2,
-    CRLED_CMDOP_CLEAR    = 0x3
+    CRLED_CMDOP_CLEAR    = 0x3,
+    CRLED_CMDOP_PING_RSP = 0x4,
 }CRLED_CMDOP_T;
         
 typedef struct crledCommandPacket

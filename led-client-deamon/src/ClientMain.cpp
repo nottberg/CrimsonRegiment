@@ -151,6 +151,31 @@ ClientMain::eventAction( uint32_t eventID )
                     sequencer.clearSequence();
                 }
                 break;
+
+                case CRLED_CMDOP_PING:
+                {
+                    CRLEDCommandPacket rspPkt;
+                    char tmpBuf[128];
+
+                    std::cout << "Ping Request: " << cmdPkt.getParam1() << std::endl;
+
+                    rspPkt.setOpCode( CRLED_CMDOP_PING_RSP );
+                    rspPkt.setTSSec( 0 );
+                    rspPkt.setTSUSec( 0 );
+
+                    rspPkt.setParam1( cmdPkt.getParam1() );
+                    rspPkt.setParam2( cmdPkt.getParam2() );
+                    rspPkt.setParam3( cmdPkt.getParam3() );
+
+                    std::cout << "Send: " << inet_ntop( AF_INET, &(addr.sin_addr), tmpBuf, sizeof(tmpBuf) ) << std::endl;
+
+                    if( sendto( eventSock.getSocketFD(), rspPkt.getMessageBuffer(), rspPkt.getMessageLength(), 0, (struct sockaddr *)&(addr), sizeof(struct sockaddr_in) ) < 0 )
+                    {
+                        std::cout << "Ping Response send failed: " << cmdPkt.getParam1() << std::endl;
+                    }
+                }
+                break;
+
             }
         }
     }
