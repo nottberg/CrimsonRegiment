@@ -152,11 +152,19 @@ CRLStatusResource::restGet( RESTRequest *request )
     // Build response data
     resp = "{ \"nodes\": [";
 
-    for( std::vector< PTRACK_T >::iterator it = trackList.begin(); it != trackList.end(); it++ )
+    uint32_t indx = 0;
+    for( std::vector< PTRACK_T >::iterator it = trackList.begin(); it != trackList.end(); it++, indx++ )
     {
         char tmpStr[ 128 ];
 
-        resp += "{";
+        if( indx == 0 )
+        {
+            resp += "{";
+        }
+        else
+        {
+            resp += ",{";
+        }
        
         resp += "\"addr\":";
         if( inet_ntop( AF_INET, &(it->endpoint), tmpStr, sizeof( tmpStr ) ) == NULL )
@@ -223,16 +231,69 @@ void
 CRLSequenceResource::restPut( RESTRequest *request )
 {
     std::string resp;
+    CRLEDConfigFile cfgFile;
+    std::vector< struct sockaddr_in > serverList;
+    CRLEDCommandPacket cmdPkt;
+    struct timeval curTime;
+    struct timeval futureTime;
+    int sock;
+    uint32_t seqIndex = 0;
 
-    cout << "CRLSequenceResource::restGet -- start" << std::endl;
+    cout << "CRLSequenceResource::restPUT -- start" << std::endl;
 
+    // Attempt to load the configuration
+    cfgFile.load();
+
+    // Fill the server list
+    cfgFile.getLEDEndpointAddrList( serverList );
 
     std::cout << "Sending clear sequence" << std::endl;
 
+    // Get the current time.
+    if( gettimeofday( &curTime, NULL ) ) 
+    {
+        perror("gettimeofday()");
+        //return 1;
+    }
+
+    // Calculate a time in the future for the nodes to take action, start delay is in milliseconds.
+    futureTime.tv_sec  = curTime.tv_sec;
+    futureTime.tv_usec = curTime.tv_usec + 10000;
+    if( futureTime.tv_usec >= 1000000 )
+    {
+        futureTime.tv_sec  += 1;
+        futureTime.tv_usec -= 1000000; 
+    }  
+
+    cmdPkt.setOpCode( CRLED_CMDOP_SCHEDULE );
+    cmdPkt.setTSSec( futureTime.tv_sec );
+    cmdPkt.setTSUSec( futureTime.tv_usec );
+
+    cmdPkt.setParam1( seqIndex );
+
+    // set up socket
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if( sock < 0 ) 
+    {
+        perror("socket");
+    }
+
+    // Send the command packet to all recipients
+    for( std::vector< struct sockaddr_in >::iterator it = serverList.begin(); it != serverList.end(); it++ )
+    {
+        char tmpBuf[64];
+        std::cout << "Send: " << inet_ntop( AF_INET, &(it->sin_addr), tmpBuf, sizeof(tmpBuf) ) << std::endl;
+
+        if( sendto( sock, cmdPkt.getMessageBuffer(), cmdPkt.getMessageLength(), 0, (struct sockaddr *)&(*it), sizeof(struct sockaddr_in) ) < 0 )
+        {
+            perror("sendto");
+        }
+    }
+
+    close( sock );
+
     request->setResponseCode( REST_HTTP_RCODE_OK );
     request->sendResponse();
-
-    return;
 }
 
 void 
