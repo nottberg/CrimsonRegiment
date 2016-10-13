@@ -139,6 +139,9 @@ class LEDDriver : public EventNotify
 
         void getPixel( uint16_t pixelIndex, uint8_t &red, uint8_t &green, uint8_t &blue );
 
+        // Test and Initialize the connected leds.
+        void testSequence();
+
         // Signal that an update is pending
         void signalUpdate();
 

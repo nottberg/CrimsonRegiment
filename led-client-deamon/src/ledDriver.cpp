@@ -455,6 +455,38 @@ LEDDriver::getPixel( uint16_t pixelIndex, uint8_t &red, uint8_t &green, uint8_t 
 }
 
 void 
+LEDDriver::testSequence()
+{
+   // Perform the sequence multiple times
+   for( uint32_t i = 0; i < 4; i++ )
+   {
+       uint32_t pIndx;
+
+       // Turn all LEDs on
+       for( pIndx = 0; pIndx < getPixelCount(); pIndx++ )
+       {
+           setPixel( pIndx, 0xff, 0xff, 0xff );
+       }
+
+       processUpdates();
+
+       // Sleep 2 seconds
+       sleep(2);
+
+       // Turn all LED off
+       for( pIndx = 0; pIndx < getPixelCount(); pIndx++ )
+       {
+           setPixel( pIndx, 0, 0, 0 );
+       }
+
+       processUpdates();
+       
+       // Sleep 2 seconds
+       sleep(2);
+   }
+}
+
+void 
 LEDDriver::processUpdates()
 {
     size_t   size;

@@ -103,6 +103,11 @@ ClientMain::setup()
 void 
 ClientMain::run()
 {
+    // Run a test sequence to test and clear
+    // and power on transients
+    driver.testSequence();
+
+    // Start normal operations
     loop.start();
 }
 
