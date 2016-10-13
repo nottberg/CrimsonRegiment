@@ -247,7 +247,15 @@ CRLSequenceResource::restPut( RESTRequest *request )
     // Fill the server list
     cfgFile.getLEDEndpointAddrList( serverList );
 
-    std::cout << "Sending clear sequence" << std::endl;
+    // Check for a query parameter
+    std::string qvalue;
+    if( request->getInboundRepresentation()->getQueryParameter( "seqIndex", qvalue ) == false )
+    {
+        // The query parameter exists, try to turn it into a number
+        seqIndex = strtol( qvalue.c_str(), NULL, 0 );
+    }
+
+    std::cout << "Starting sequence: " << seqIndex << std::endl;
 
     // Get the current time.
     if( gettimeofday( &curTime, NULL ) ) 
