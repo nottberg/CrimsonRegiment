@@ -126,11 +126,11 @@ class LEDSequencer : public EventNotify
 {
     private:
 
-        LEDDriver         *leds;
+        LEDDriver            *leds;
 
-        TimerEventSource   timer;
+        HeartbeatEventSource  timer;
 
-        CRLSeqNode        *cfgNode;
+        CRLSeqNode           *cfgNode;
 
 //        std::vector< LEDSequence > sequenceArray;
 

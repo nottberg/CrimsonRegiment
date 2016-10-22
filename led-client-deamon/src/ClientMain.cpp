@@ -8,7 +8,7 @@
 #include "ClientMain.hpp"
 
 ClientMain::ClientMain()
-: eventSock( 1, "eventSock" )
+: eventSock( 1, "eventSock" ), statusTimer( 2, "statusTimer" )
 {
 
 }
@@ -51,6 +51,10 @@ ClientMain::setup()
     eventSock.addObserver( this );
     eventSock.setup();
     loop.addSource( &eventSock );
+
+    statusTimer.addObserver( this );
+    statusTimer.setup( 1000 );
+    loop.addSource( &statusTimer );
 
 #if 0
     LDStepWaitForStart *startStep = new LDStepWaitForStart;
@@ -182,6 +186,31 @@ ClientMain::eventAction( uint32_t eventID )
                 break;
 
             }
+        }
+        break;
+
+        // Status timeout
+        case 2:
+        {
+            // Read the /proc/net/wireless values to get connection statistics
+            FILE   *fp;
+            char   *line = NULL;
+            size_t  len = 0;
+            ssize_t read;
+
+            fp = fopen( "/proc/net/wireless", "r");
+            if( fp == NULL )
+                break;
+        
+            while( ( read = getline( &line, &len, fp ) ) != -1 ) 
+            {
+                printf("Retrieved line of length %zu :\n", read);
+                printf("%s", line);
+            }
+
+            fclose(fp);
+            if( line )
+                free(line);
         }
     }
 }

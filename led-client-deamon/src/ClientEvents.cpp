@@ -17,10 +17,105 @@ SignalEventSource::~SignalEventSource()
 
 }
 
-TimerEventSource::TimerEventSource( uint32_t evID, std::string evName )
+HeartbeatEventSource::HeartbeatEventSource( uint32_t evID, std::string evName )
 : EventSource( evID, evName )
 {
 
+}
+
+HeartbeatEventSource::~HeartbeatEventSource()
+{
+
+}
+
+bool 
+HeartbeatEventSource::setup()
+{
+
+}
+
+void 
+HeartbeatEventSource::registerEvent()
+{
+    struct timeval TIMER_TV = {1, 0};
+
+    // Add the clock event
+    evtimer_set( getEventPtr(), EventSource::eventCB, this );
+    evtimer_add( getEventPtr(), &TIMER_TV );
+}
+
+void 
+HeartbeatEventSource::beforeObservers( const int arg1, short int which )
+{
+#if 0
+    struct timeval CLOCK_TV;
+
+    std::cout << "TimerEventSource::beforeObservers" << std::endl;
+
+    if( gettimeofday( &CLOCK_TV, NULL ) ) 
+    {
+        perror("gettimeofday()");
+        event_loopbreak();
+    }
+
+    printf( "timer cb: %d, %d\n", CLOCK_TV.tv_sec, CLOCK_TV.tv_usec );
+#endif
+}
+
+void 
+HeartbeatEventSource::afterObservers( const int arg1, short int which )
+{
+    struct timeval CLOCK_TV;
+    struct timeval NEW_TV;
+    struct timeval TIMER_TV = {1, 0};
+
+    //std::cout << "TimerEventSource::afterObservers" << std::endl;
+
+    // Get the current time.
+    if( gettimeofday( &CLOCK_TV, NULL ) ) 
+    {
+        perror("gettimeofday()");
+        event_loopbreak();
+    }
+
+    //printf( "timer cb: %d, %d\n", CLOCK_TV.tv_sec, CLOCK_TV.tv_usec );
+
+    // Calculate the time to the next 100ms boundary
+    NEW_TV.tv_usec = ( ( CLOCK_TV.tv_usec / 1000 ) * 1000 ) + 1000;
+    NEW_TV.tv_sec  = CLOCK_TV.tv_sec;
+
+    while( NEW_TV.tv_usec >= 1000000 )
+    {
+        NEW_TV.tv_usec -= 1000000;
+        NEW_TV.tv_sec  += 1;
+    }
+
+    //printf( "new time: %d, %d\n", NEW_TV.tv_sec, NEW_TV.tv_usec );
+
+    if( NEW_TV.tv_usec == 0 )
+    {
+        TIMER_TV.tv_sec  = NEW_TV.tv_sec  - CLOCK_TV.tv_sec - 1;
+        TIMER_TV.tv_usec = 1000000 - CLOCK_TV.tv_usec;
+    }
+    else
+    {
+        TIMER_TV.tv_sec  = NEW_TV.tv_sec  - CLOCK_TV.tv_sec;
+        TIMER_TV.tv_usec = NEW_TV.tv_usec - CLOCK_TV.tv_usec;
+    }
+
+    //printf( "new inc: %d, %d\n", TIMER_TV.tv_sec, TIMER_TV.tv_usec );
+
+    // Wake up again in a little bit.
+    evtimer_add( getEventPtr(), &TIMER_TV );
+}
+
+
+
+TimerEventSource::TimerEventSource( uint32_t evID, std::string evName )
+: EventSource( evID, evName )
+{
+    // Default to 1ms
+    periodUS = 1000;
 }
 
 TimerEventSource::~TimerEventSource()
@@ -29,15 +124,21 @@ TimerEventSource::~TimerEventSource()
 }
 
 bool 
-TimerEventSource::setup()
+TimerEventSource::setup( uint32_t timeoutInMS )
 {
-
+    periodUS = timeoutInMS * 1000;
 }
 
 void 
 TimerEventSource::registerEvent()
 {
-    struct timeval TIMER_TV = {1, 0};
+    struct timeval TIMER_TV = {0, periodUS};
+
+    while( TIMER_TV.tv_usec >= 1000000 )
+    {
+        TIMER_TV.tv_usec -= 1000000;
+        TIMER_TV.tv_sec  += 1;
+    }
 
     // Add the clock event
     evtimer_set( getEventPtr(), EventSource::eventCB, this );
@@ -65,49 +166,19 @@ TimerEventSource::beforeObservers( const int arg1, short int which )
 void 
 TimerEventSource::afterObservers( const int arg1, short int which )
 {
-    struct timeval CLOCK_TV;
-    struct timeval NEW_TV;
-    struct timeval TIMER_TV = {1, 0};
+    struct timeval TIMER_TV = {0, periodUS};
 
-    //std::cout << "TimerEventSource::afterObservers" << std::endl;
-
-    // Get the current time.
-    if( gettimeofday( &CLOCK_TV, NULL ) ) 
+    while( TIMER_TV.tv_usec >= 1000000 )
     {
-        perror("gettimeofday()");
-        event_loopbreak();
+        TIMER_TV.tv_usec -= 1000000;
+        TIMER_TV.tv_sec  += 1;
     }
-
-    //printf( "timer cb: %d, %d\n", CLOCK_TV.tv_sec, CLOCK_TV.tv_usec );
-
-    // Calculate the time to the next 100ms boundary
-    NEW_TV.tv_usec = ( ( CLOCK_TV.tv_usec / 1000 ) * 1000 ) + 1000;
-    NEW_TV.tv_sec  = CLOCK_TV.tv_sec;
-
-    if( NEW_TV.tv_usec >= 1000000 )
-    {
-        NEW_TV.tv_usec -= 1000000;
-        NEW_TV.tv_sec  += 1;
-    }
-
-    //printf( "new time: %d, %d\n", NEW_TV.tv_sec, NEW_TV.tv_usec );
-
-    if( NEW_TV.tv_usec == 0 )
-    {
-        TIMER_TV.tv_sec  = NEW_TV.tv_sec  - CLOCK_TV.tv_sec - 1;
-        TIMER_TV.tv_usec = 1000000 - CLOCK_TV.tv_usec;
-    }
-    else
-    {
-        TIMER_TV.tv_sec  = NEW_TV.tv_sec  - CLOCK_TV.tv_sec;
-        TIMER_TV.tv_usec = NEW_TV.tv_usec - CLOCK_TV.tv_usec;
-    }
-
-    //printf( "new inc: %d, %d\n", TIMER_TV.tv_sec, TIMER_TV.tv_usec );
 
     // Wake up again in a little bit.
     evtimer_add( getEventPtr(), &TIMER_TV );
 }
+
+
 
 SoftEventSource::SoftEventSource( uint32_t evID, std::string evName )
 : EventSource( evID, evName )

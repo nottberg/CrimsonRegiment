@@ -21,15 +21,33 @@ class SignalEventSource : public EventSource
 
 };
 
+class HeartbeatEventSource : public EventSource
+{
+    private:
+
+    public:
+        HeartbeatEventSource( uint32_t EventID, std::string eventName );
+       ~HeartbeatEventSource();
+
+        bool setup();
+
+        virtual void registerEvent();
+
+        virtual void beforeObservers( const int arg1, short int which );
+        virtual void afterObservers( const int arg1, short int which );
+
+};
+
 class TimerEventSource : public EventSource
 {
     private:
+        uint32_t periodUS;
 
     public:
         TimerEventSource( uint32_t EventID, std::string eventName );
        ~TimerEventSource();
 
-        bool setup();
+        bool setup( uint32_t timeoutInMS );
 
         virtual void registerEvent();
 

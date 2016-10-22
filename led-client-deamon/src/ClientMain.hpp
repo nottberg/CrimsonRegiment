@@ -20,6 +20,7 @@ class ClientMain : public EventNotify
         LEDSequencer      sequencer;
 
         SocketEventSource eventSock;
+        TimerEventSource  statusTimer;
 
     public:
         ClientMain();
