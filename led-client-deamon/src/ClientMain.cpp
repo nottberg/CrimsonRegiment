@@ -197,6 +197,11 @@ ClientMain::eventAction( uint32_t eventID )
             char   *line = NULL;
             size_t  len = 0;
             ssize_t read;
+            char    infStr[128];
+            int32_t linkVal;
+            int32_t linkLevel;
+            int32_t linkNoise;
+            int32_t infState;
 
             fp = fopen( "/proc/net/wireless", "r");
             if( fp == NULL )
@@ -206,6 +211,9 @@ ClientMain::eventAction( uint32_t eventID )
             {
                 printf("Retrieved line of length %zu :\n", read);
                 printf("%s", line);
+                sscanf( line, "%s %d %d %d %d", infStr, &infState, &linkVal, &linkLevel, &linkNoise );
+
+                printf( "%s %d %d %d %d", infStr, infState, linkVal, linkLevel, linkNoise ); 
             }
 
             fclose(fp);
