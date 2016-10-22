@@ -211,9 +211,9 @@ ClientMain::eventAction( uint32_t eventID )
             {
                 printf("Retrieved line of length %zu :\n", read);
                 printf("%s", line);
-                sscanf( line, "%s %d %d %d %d", infStr, &infState, &linkVal, &linkLevel, &linkNoise );
+                sscanf( line, "%s %d %d%[. ]* %d%[. ]* %d%[. ]*", infStr, &infState, &linkVal, &linkLevel, &linkNoise );
 
-                printf( "%s %d %d %d %d", infStr, infState, linkVal, linkLevel, linkNoise ); 
+                printf( "Parsed: %s %d %d %d %d\n", infStr, infState, linkVal, linkLevel, linkNoise ); 
             }
 
             fclose(fp);
