@@ -53,9 +53,9 @@ ClientMain::setup()
     eventSock.setup();
     loop.addSource( &eventSock );
 
-    statusTimer.addObserver( this );
-    statusTimer.setup( 1000 );
-    loop.addSource( &statusTimer );
+//    statusTimer.addObserver( this );
+//    statusTimer.setup( 1000 );
+//    loop.addSource( &statusTimer );
 
 #if 0
     LDStepWaitForStart *startStep = new LDStepWaitForStart;
@@ -164,10 +164,46 @@ ClientMain::eventAction( uint32_t eventID )
 
                 case CRLED_CMDOP_PING:
                 {
+                    FILE   *fp;
+                    char   *line = NULL;
+                    size_t  len = 0;
+                    ssize_t read;
+                    char    infStr[128];
+                    int32_t linkVal;
+                    int32_t linkLevel;
+                    int32_t linkNoise;
+                    int32_t infState;
                     CRLEDCommandPacket rspPkt;
                     char tmpBuf[128];
 
                     std::cout << "Ping Request: " << cmdPkt.getParam1() << std::endl;
+
+                    // Read the /proc/net/wireless values to get connection statistics
+                    fp = fopen( "/proc/net/wireless", "r");
+                    if( fp == NULL )
+                        break;
+        
+                    bool wFound = false;
+                    while( ( read = getline( &line, &len, fp ) ) != -1 ) 
+                    {
+                        //printf("Retrieved line of length %zu :\n", read);
+                        //printf("%s", line);
+
+                        // Attempt to extract out some fields
+                        sscanf( line, "%s %d %d%*[. ] %d%*[. ] %d%*[. ]", infStr, &infState, &linkVal, &linkLevel, &linkNoise );
+
+                        // Check for the wlan0 file we are intersted in.
+                        if( strncmp( infStr, "wlan0", 5 ) == 0 )
+                        {
+                            printf( "%s %d %d %d %d\n", infStr, infState, linkVal, linkLevel, linkNoise );
+                            wFound = true;
+                            break; 
+                        }
+                    }
+
+                    fclose( fp );
+                    if( line )
+                        free( line );
 
                     rspPkt.setOpCode( CRLED_CMDOP_PING_RSP );
                     rspPkt.setTSSec( 0 );
@@ -175,7 +211,8 @@ ClientMain::eventAction( uint32_t eventID )
 
                     rspPkt.setParam1( cmdPkt.getParam1() );
                     rspPkt.setParam2( cmdPkt.getParam2() );
-                    rspPkt.setParam3( cmdPkt.getParam3() );
+                    rspPkt.setParam3( wFound ? linkVal : 0 );
+                    rspPkt.setParam4( wFound ? linkLevel : 0 );
 
                     std::cout << "Send: " << inet_ntop( AF_INET, &(addr.sin_addr), tmpBuf, sizeof(tmpBuf) ) << std::endl;
 
