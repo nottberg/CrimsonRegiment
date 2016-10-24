@@ -1,6 +1,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <string.h>
 
 #include <iostream>
 
@@ -209,11 +210,17 @@ ClientMain::eventAction( uint32_t eventID )
         
             while( ( read = getline( &line, &len, fp ) ) != -1 ) 
             {
-                printf("Retrieved line of length %zu :\n", read);
-                printf("%s", line);
+                //printf("Retrieved line of length %zu :\n", read);
+                //printf("%s", line);
+
+                // Attempt to extract out some fields
                 sscanf( line, "%s %d %d%*[. ] %d%*[. ] %d%*[. ]", infStr, &infState, &linkVal, &linkLevel, &linkNoise );
 
-                printf( "Parsed: %s %d %d %d %d\n", infStr, infState, linkVal, linkLevel, linkNoise ); 
+                // Check for the wlan0 file we are intersted in.
+                if( strncmp( infStr, "wlan0", 5 ) == 0 )
+                {
+                    printf( "%s %d %d %d %d\n", infStr, infState, linkVal, linkLevel, linkNoise ); 
+                }
             }
 
             fclose(fp);
