@@ -19,13 +19,19 @@ CRLStatusResource::~CRLStatusResource()
 
 typedef struct pingTrackStruct
 {
-    struct in_addr endpoint;
+    struct sockaddr_in endpoint;
 
     bool     rspRcvd;
     bool     error;
 
     struct timeval sendTime;
     struct timeval rspTime;
+
+    CRLEDCommandPacket cmdPkt;
+
+    uint32_t sendIndex;
+    int32_t  linkVal;
+    int32_t  linkSig;
 }PTRACK_T;
 
 void 
@@ -34,11 +40,20 @@ CRLStatusResource::restGet( RESTRequest *request )
     std::string resp;
     CRLEDConfigFile cfgFile;
     std::vector< struct sockaddr_in > serverList;
-    std::vector< PTRACK_T > trackList;
+    std::map< uint32_t, PTRACK_T > trackMap;
     CRLEDCommandPacket cmdPkt;
     struct timeval curTime;
     struct timeval endTime;
     int sock;
+    FILE   *fp;
+    char   *line = NULL;
+    size_t  len = 0;
+    ssize_t read;
+    char    infStr[128];
+    int32_t linkVal;
+    int32_t linkLevel;
+    int32_t linkNoise;
+    int32_t infState;
 
     cout << "CRLStatusResource::restGet -- start" << std::endl;
 
@@ -48,9 +63,6 @@ CRLStatusResource::restGet( RESTRequest *request )
     // Fill the server list
     cfgFile.getLEDEndpointAddrList( serverList );
 
-    cmdPkt.setOpCode( CRLED_CMDOP_PING );
-    cmdPkt.setTSSec( 0 );
-    cmdPkt.setTSUSec( 0 );
 
     // set up socket
     sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -59,101 +71,150 @@ CRLStatusResource::restGet( RESTRequest *request )
         perror("socket");
     }
 
-    // Send the command packet to all recipients
+    // Build the tracking structure
     int sendIndx = 0;
     for( std::vector< struct sockaddr_in >::iterator it = serverList.begin(); it != serverList.end(); it++, sendIndx++ )
     {
         char tmpBuf[64];
         PTRACK_T trackData;
 
-        trackData.endpoint = it->sin_addr;
-        trackData.rspRcvd  = false;
-        trackData.error    = false;
+        // Create a record in the tracking list.
+        trackMap.insert( std::pair< uint32_t, PTRACK_T >( (uint32_t) it->sin_addr.s_addr, trackData ) );       
+
+        // Get access to the new record
+        std::map< uint32_t, PTRACK_T >::iterator tit = trackMap.find( (uint32_t) it->sin_addr.s_addr );
+
+        tit->second.endpoint  = *it; //it->sin_addr;
+        tit->second.rspRcvd   = false;
+        tit->second.error     = false;
+        tit->second.sendIndex = sendIndx;
+        tit->second.linkVal   = 0;
+        tit->second.linkSig   = 0;
+
+        tit->second.cmdPkt.setOpCode( CRLED_CMDOP_PING );
+        tit->second.cmdPkt.setTSSec( 0 );
+        tit->second.cmdPkt.setTSUSec( 0 );
+        tit->second.cmdPkt.setParam1( (uint32_t) it->sin_addr.s_addr );
+        tit->second.cmdPkt.setParam2( sendIndx );
+    }
+
+    for( std::map< uint32_t, PTRACK_T >::iterator it = trackMap.begin(); it != trackMap.end(); it++ )
+    {
+        char tmpBuf[64];
 
         // Get the current time.
-        if( gettimeofday( &trackData.sendTime, NULL ) ) 
+        if( gettimeofday( &it->second.sendTime, NULL ) ) 
         {
-            trackData.error = true;
+            it->second.error = true;
             continue;
         }
 
         // Default the rspTime to the sendTime
-        trackData.rspTime = trackData.sendTime;
+        it->second.rspTime = it->second.sendTime;
 
-        cmdPkt.setParam1( (uint32_t) it->sin_addr.s_addr );
-        cmdPkt.setParam2( sendIndx );
-        cmdPkt.setParam3( 0 );
+        std::cout << "Send: " << inet_ntop( AF_INET, &(it->second.endpoint.sin_addr), tmpBuf, sizeof(tmpBuf) ) << std::endl;
 
-        std::cout << "Send: " << inet_ntop( AF_INET, &(it->sin_addr), tmpBuf, sizeof(tmpBuf) ) << std::endl;
-
-        if( sendto( sock, cmdPkt.getMessageBuffer(), cmdPkt.getMessageLength(), 0, (struct sockaddr *)&(*it), sizeof(struct sockaddr_in) ) < 0 )
+        if( sendto( sock, it->second.cmdPkt.getMessageBuffer(), it->second.cmdPkt.getMessageLength(), 0, (struct sockaddr *)&(it->second.endpoint), sizeof(struct sockaddr_in) ) < 0 )
         {
-            trackData.error = true;
+            it->second.error = true;
         }
+    }
+    
 
-        // Wait for a response
-        while( ( trackData.error == false ) && ( trackData.rspRcvd == false ) && ( trackData.rspTime.tv_sec < ( trackData.sendTime.tv_sec + 1 ) ) )
+    // Calculate the endtime
+    gettimeofday( &endTime, NULL );
+    endTime.tv_sec += 4;
+
+    // Wait for responses (for 4 seconds)
+    while( ( curTime.tv_sec < endTime.tv_sec ) && ( curTime.tv_usec < endTime.tv_usec ) )
+    {
+        int32_t            bytesRead;
+        CRLEDCommandPacket cmdPkt;
+        struct sockaddr_in addr; 
+        unsigned int       addrLen = sizeof( addr );
+
+        bytesRead = recvfrom( sock, cmdPkt.getMessageBuffer(), cmdPkt.getMaxMessageLength(), MSG_DONTWAIT, (struct sockaddr *) &addr, &addrLen );
+
+        // Update the current time.
+        gettimeofday( &curTime, NULL );
+
+        if( bytesRead < 0 )
         {
-            int32_t            bytesRead;
-            CRLEDCommandPacket cmdPkt;
-            struct sockaddr_in addr; 
-            unsigned int       addrLen = sizeof( addr );
-
-            bytesRead = recvfrom( sock, cmdPkt.getMessageBuffer(), cmdPkt.getMaxMessageLength(), MSG_DONTWAIT, (struct sockaddr *) &addr, &addrLen );
-
-            // Update the current time.
-            gettimeofday( &trackData.rspTime, NULL );
-
-            if( bytesRead < 0 )
-            {
-                if( ( errno == EAGAIN ) || ( errno == EWOULDBLOCK ) )
-                    continue;
+            if( ( errno == EAGAIN ) || ( errno == EWOULDBLOCK ) )
+                continue;
  
-                // Error
-                trackData.error = true;
-                continue;
-            }
-            else if( bytesRead < sizeof( CRLED_CMDPKT_T ) )
-            {
-                trackData.error = true;
-                continue;
-            }
-
-            switch( cmdPkt.getOpCode() )
-            {
-                case CRLED_CMDOP_PING_RSP:
-                {
-                    if( cmdPkt.getParam1() == (uint32_t) trackData.endpoint.s_addr )
-                    {
-                        // Grab the timestamp
-                        if( gettimeofday( &trackData.rspTime, NULL ) ) 
-                        {
-                            trackData.error = true;
-                        }
-
-                        trackData.rspRcvd  = true;
-                    }
-                }
-                break;
-
-                default:
-                break;
-            }
-
-
+            // Error
+            continue;
+        }
+        else if( bytesRead < sizeof( CRLED_CMDPKT_T ) )
+        {
+            continue;
         }
 
-        // Add the record to the tracking list.
-        trackList.push_back( trackData );
+        switch( cmdPkt.getOpCode() )
+        {
+            case CRLED_CMDOP_PING_RSP:
+            {
+         
+                // Find the cooresponding send record
+                std::map< uint32_t, PTRACK_T >::iterator it = trackMap.find( (uint32_t) addr.sin_addr.s_addr );
+
+                // If not found then move on.
+                if( it == trackMap.end() )
+                    continue;       
+
+                // Verify the send index
+                if( cmdPkt.getParam2() != it->second.sendIndex )
+                    continue;
+
+                it->second.rspRcvd = true;
+                it->second.rspTime = curTime;
+                it->second.linkVal = cmdPkt.getParam3();
+                it->second.linkSig = cmdPkt.getParam4();
+            }
+            break;
+
+            default:
+            break;
+        }
+
     }
 
     close( sock );
+
+    // Get the signal strength for our wlan0 connection
+    bool wFound = false;
+
+    fp = fopen( "/proc/net/wireless", "r");
+    if( fp != NULL )
+    {
+        while( ( read = getline( &line, &len, fp ) ) != -1 ) 
+        {
+            //printf("Retrieved line of length %zu :\n", read);
+            //printf("%s", line);
+
+            // Attempt to extract out some fields
+            sscanf( line, "%s %d %d%*[. ] %d%*[. ] %d%*[. ]", infStr, &infState, &linkVal, &linkLevel, &linkNoise );
+
+            // Check for the wlan0 file we are intersted in.
+            if( strncmp( infStr, "wlan0", 5 ) == 0 )
+            {
+                printf( "%s %d %d %d %d\n", infStr, infState, linkVal, linkLevel, linkNoise );
+                wFound = true;
+                break; 
+            }
+        }
+
+        fclose( fp );
+        if( line )
+            free( line );
+    }
 
     // Build response data
     resp = "{ \"nodes\": [";
 
     uint32_t indx = 0;
-    for( std::vector< PTRACK_T >::iterator it = trackList.begin(); it != trackList.end(); it++, indx++ )
+    for( std::map< uint32_t, PTRACK_T >::iterator it = trackMap.begin(); it != trackMap.end(); it++, indx++ )
     {
         char tmpStr[ 128 ];
 
@@ -167,7 +228,7 @@ CRLStatusResource::restGet( RESTRequest *request )
         }
        
         resp += "\"addr\":";
-        if( inet_ntop( AF_INET, &(it->endpoint), tmpStr, sizeof( tmpStr ) ) == NULL )
+        if( inet_ntop( AF_INET, &(it->second.endpoint.sin_addr), tmpStr, sizeof( tmpStr ) ) == NULL )
         {
             resp += "\"\"";
         }
@@ -180,22 +241,22 @@ CRLStatusResource::restGet( RESTRequest *request )
         
         resp += ",";
         resp += "\"rspRX\":";
-        resp += ( it->rspRcvd == true ? "\"true\"" : "\"false\"" );
+        resp += ( it->second.rspRcvd == true ? "\"true\"" : "\"false\"" );
 
         resp += ",";
         resp += "\"error\":";
-        resp += ( it->error == true ? "\"true\"" : "\"false\"" );
+        resp += ( it->second.error == true ? "\"true\"" : "\"false\"" );
 
         uint32_t rspMS;
-        rspMS  = (it->rspTime.tv_sec - it->sendTime.tv_sec) * 1000;
-        if( it->rspTime.tv_usec >= it->sendTime.tv_usec )
+        rspMS  = (it->second.rspTime.tv_sec - it->second.sendTime.tv_sec) * 1000;
+        if( it->second.rspTime.tv_usec >= it->second.sendTime.tv_usec )
         {
-            rspMS += (it->rspTime.tv_usec - it->sendTime.tv_usec) / 1000;
+            rspMS += (it->second.rspTime.tv_usec - it->second.sendTime.tv_usec) / 1000;
         }
         else
         {
-            rspMS += (1000000 - it->sendTime.tv_usec) / 1000;
-            rspMS += (it->rspTime.tv_usec) / 1000;
+            rspMS += (1000000 - it->second.sendTime.tv_usec) / 1000;
+            rspMS += (it->second.rspTime.tv_usec) / 1000;
         }
 
         resp += ",";
