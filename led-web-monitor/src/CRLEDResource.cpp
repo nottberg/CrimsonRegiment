@@ -72,8 +72,8 @@ CRLStatusResource::restGet( RESTRequest *request )
     }
 
     // Build the tracking structure
-    int sendIndx = 0;
-    for( std::vector< struct sockaddr_in >::iterator it = serverList.begin(); it != serverList.end(); it++, sendIndx++ )
+    uint32_t sndCnt = 0;
+    for( std::vector< struct sockaddr_in >::iterator it = serverList.begin(); it != serverList.end(); it++, sndCnt++ )
     {
         char tmpBuf[64];
         PTRACK_T trackData;
@@ -87,7 +87,7 @@ CRLStatusResource::restGet( RESTRequest *request )
         tit->second.endpoint  = *it; //it->sin_addr;
         tit->second.rspRcvd   = false;
         tit->second.error     = false;
-        tit->second.sendIndex = sendIndx;
+        tit->second.sendIndex = sndCnt;
         tit->second.linkVal   = 0;
         tit->second.linkSig   = 0;
 
@@ -95,7 +95,7 @@ CRLStatusResource::restGet( RESTRequest *request )
         tit->second.cmdPkt.setTSSec( 0 );
         tit->second.cmdPkt.setTSUSec( 0 );
         tit->second.cmdPkt.setParam1( (uint32_t) it->sin_addr.s_addr );
-        tit->second.cmdPkt.setParam2( sendIndx );
+        tit->second.cmdPkt.setParam2( sndCnt );
     }
 
     for( std::map< uint32_t, PTRACK_T >::iterator it = trackMap.begin(); it != trackMap.end(); it++ )
@@ -120,13 +120,14 @@ CRLStatusResource::restGet( RESTRequest *request )
         }
     }
     
-
     // Calculate the endtime
     gettimeofday( &endTime, NULL );
     endTime.tv_sec += 4;
 
+
     // Wait for responses (for 4 seconds)
-    while( ( curTime.tv_sec < endTime.tv_sec ) && ( curTime.tv_usec < endTime.tv_usec ) )
+    uint32_t rspCnt = 0;
+    while( ( rspCnt < sndCnt ) && ( curTime.tv_sec < endTime.tv_sec ) && ( curTime.tv_usec < endTime.tv_usec ) )
     {
         int32_t            bytesRead;
         CRLEDCommandPacket cmdPkt;
@@ -171,6 +172,8 @@ CRLStatusResource::restGet( RESTRequest *request )
                 it->second.rspTime = curTime;
                 it->second.linkVal = cmdPkt.getParam3();
                 it->second.linkSig = cmdPkt.getParam4();
+
+                rspCnt += 1;
             }
             break;
 
@@ -184,6 +187,7 @@ CRLStatusResource::restGet( RESTRequest *request )
 
     // Get the signal strength for our wlan0 connection
     bool wFound = false;
+    char tmpStr[ 128 ];
 
     fp = fopen( "/proc/net/wireless", "r");
     if( fp != NULL )
@@ -211,13 +215,23 @@ CRLStatusResource::restGet( RESTRequest *request )
     }
 
     // Build response data
-    resp = "{ \"nodes\": [";
+    resp = "{";
+
+    resp += "\"linkQuality\":";
+    sprintf( tmpStr, "\"%d\"", ( wFound ? linkVal : 0 ) );
+    resp += (const char *) tmpStr;
+
+    resp += ",";
+    resp += "\"linkSignal\":";
+    sprintf( tmpStr, "\"%d\"", ( wFound ? linkLevel : 0 ) );
+    resp += (const char *) tmpStr;
+
+    resp += ",";
+    resp += "\"nodes\": [";
 
     uint32_t indx = 0;
     for( std::map< uint32_t, PTRACK_T >::iterator it = trackMap.begin(); it != trackMap.end(); it++, indx++ )
     {
-        char tmpStr[ 128 ];
-
         if( indx == 0 )
         {
             resp += "{";
@@ -246,6 +260,16 @@ CRLStatusResource::restGet( RESTRequest *request )
         resp += ",";
         resp += "\"error\":";
         resp += ( it->second.error == true ? "\"true\"" : "\"false\"" );
+
+        resp += ",";
+        resp += "\"linkQuality\":";
+        sprintf( tmpStr, "\"%d\"", it->second.linkVal );
+        resp += (const char *) tmpStr;
+
+        resp += ",";
+        resp += "\"linkSignal\":";
+        sprintf( tmpStr, "\"%d\"", it->second.linkSig );
+        resp += (const char *) tmpStr;
 
         uint32_t rspMS;
         rspMS  = (it->second.rspTime.tv_sec - it->second.sendTime.tv_sec) * 1000;
