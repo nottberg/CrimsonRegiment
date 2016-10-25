@@ -122,8 +122,8 @@ CRLStatusResource::restGet( RESTRequest *request )
     
     // Calculate the endtime
     gettimeofday( &endTime, NULL );
+    curTime = endTime;
     endTime.tv_sec += 4;
-
 
     // Wait for responses (for 4 seconds)
     uint32_t rspCnt = 0;
